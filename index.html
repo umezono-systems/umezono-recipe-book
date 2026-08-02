@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7b8a2">
-  <title>梅園レシピ帳 v0.2-2_work</title>
+  <title>梅園レシピ帳 v0.2-3_work</title>
   <style>
     :root {
       --bg: #fff9ef;
@@ -197,6 +197,11 @@
       min-height: 58px;
       font-size: 17px;
       letter-spacing: 0.04em;
+    }
+
+    .entrance-portal-button {
+      width: 100%;
+      margin-top: 12px;
     }
 
     .management-login {
@@ -983,6 +988,7 @@
         <p class="open-book-note">全体公開のレシピは、ログインせずに閲覧できます。</p>
         <button id="guest-open-button" class="primary-button open-book-button button-with-icon" type="button"><span class="icon-slot" data-icon="book-open" data-icon-size="21"></span><span>レシピ帳を開く</span></button>
       </div>
+      <button id="entrance-portal-button" class="ghost-button entrance-portal-button button-with-icon" type="button"><span class="icon-slot" data-icon="home" data-icon-size="18"></span><span>梅園ポータルへ戻る</span></button>
 
       <details id="management-login-details" class="management-login">
         <summary>レシピを登録・編集する方</summary>
@@ -1010,7 +1016,7 @@
         <div class="brand-mini" aria-hidden="true"><span class="icon-slot" data-icon="umezono-dango" data-icon-size="24"></span></div>
         <div class="brand-copy">
           <h1 class="brand-name">梅園レシピ帳</h1>
-          <p class="brand-version">v0.2-2_work</p>
+          <p class="brand-version">v0.2-3_work</p>
         </div>
       </div>
       <div class="topbar-actions">
@@ -1316,12 +1322,13 @@
     'use strict';
 
     const APP_CONFIG = Object.freeze({
-      version: 'v0.2-2_work',
+      version: 'v0.2-3_work',
       apiUrl: 'https://script.google.com/macros/s/AKfycbyvpT8d7SrctV8vHGz1389z6Atn3lkXVfk4pwL-hyJhuF43o2BbS4Ww74tTCENNydnh/exec',
       portalUrl: 'https://umezono-systems.github.io/umezono-portal/',
       timeoutMs: 30000,
       contributorTimeoutMs: 60000,
       sessionStorageKey: 'umezono_recipe_auth_v01',
+      uiStateStorageKey: 'umezono_recipe_ui_state_v02',
       recentStorageKey: 'umezono_recipe_recent_v01',
       favoriteStorageKey: 'umezono_recipe_favorites_v01',
       maxLocalRecent: 6,
@@ -1430,26 +1437,34 @@
         return;
       }
       await checkConnection();
-      const saved = loadStoredAuth();
-      if (saved && saved.auth_session_token) {
+      const savedAuth = loadStoredAuth();
+      const savedUi = loadStoredUiState();
+      if (savedAuth && savedAuth.auth_session_token) {
         try {
-          state.auth = saved;
+          state.auth = savedAuth;
           await validateSession();
-          await enterApplication();
+          await enterApplication({ restoreUi: true });
+          return;
         } catch (error) {
           clearStoredAuth();
+          clearStoredUiState();
           state.auth = null;
-          showLogin();
+          showLogin(false, false);
+          return;
         }
+      }
+      if (savedUi && savedUi.mode === 'guest') {
+        await enterGuestApplication({ restoreUi: true });
       }
     }
 
     function bindEvents() {
-      $('guest-open-button').addEventListener('click', enterGuestApplication);
+      $('guest-open-button').addEventListener('click', () => enterGuestApplication({ restoreUi: false }));
+      $('entrance-portal-button').addEventListener('click', goToPortal);
       $('login-form').addEventListener('submit', handleLogin);
       $('management-login-button').addEventListener('click', () => showLogin(true));
       $('logout-button').addEventListener('click', handleLogout);
-      $('portal-button').addEventListener('click', () => { if (!confirmDiscardDraftChanges()) return; location.href = (state.app && state.app.portal_url) || APP_CONFIG.portalUrl; });
+      $('portal-button').addEventListener('click', () => { if (!confirmDiscardDraftChanges()) return; goToPortal(); });
       $('hero-all-recipes').addEventListener('click', () => openScreen('recipes'));
       $('hero-new-recipe').addEventListener('click', openCreateRecipeScreen);
       $('admin-new-recipe').addEventListener('click', openCreateRecipeScreen);
@@ -1518,7 +1533,7 @@
         state.auth = result.auth;
         storeAuth(state.auth);
         $('login-password').value = '';
-        await enterApplication();
+        await enterApplication({ restoreUi: false });
       } catch (error) {
         setLoginStatus(error.message, 'error');
       } finally {
@@ -1526,7 +1541,7 @@
       }
     }
 
-    async function enterGuestApplication() {
+    async function enterGuestApplication(options = {}) {
       if (!isApiConfigured()) {
         setLoginStatus('HTML内のAPP_CONFIG.apiUrlへGASのWebアプリURLを設定してください。', 'error');
         return;
@@ -1544,16 +1559,18 @@
         renderCategories();
         renderMasterOptions();
         await loadHomeData();
-        openScreen('home');
+        const restored = options.restoreUi ? await restoreStoredUiState() : false;
+        if (!restored) openScreen('home');
       } catch (error) {
-        showLogin(false);
+        clearStoredUiState();
+        showLogin(false, false);
         setLoginStatus(error.message, 'error');
       } finally {
         setLoading(false);
       }
     }
 
-    async function enterApplication() {
+    async function enterApplication(options = {}) {
       setLoading(true, 'レシピ帳を準備しています。');
       try {
         const initial = await apiRequest('getRecipeInitialData');
@@ -1567,7 +1584,8 @@
         renderCategories();
         renderMasterOptions();
         await loadHomeData();
-        openScreen('home');
+        const restored = options.restoreUi ? await restoreStoredUiState() : false;
+        if (!restored) openScreen('home');
       } finally {
         setLoading(false);
       }
@@ -1618,6 +1636,7 @@
         if (!state.auth) syncGuestCollections();
         $('recipe-result-line').textContent = `${result.pagination ? result.pagination.total : state.recipeList.length}件`;
         renderRecipeGrid('recipe-list-grid', state.recipeList, '条件に合うレシピがありません。');
+        if (state.currentScreen === 'recipes') persistUiState();
       } finally {
         setLoading(false);
       }
@@ -1679,8 +1698,8 @@
       `;
     }
 
-    async function openRecipeDetail(recipeId) {
-      state.previousScreen = state.currentScreen === 'detail' ? 'recipes' : state.currentScreen;
+    async function openRecipeDetail(recipeId, options = {}) {
+      state.previousScreen = options.previousScreen || (state.currentScreen === 'detail' ? 'recipes' : state.currentScreen);
       setLoading(true, 'レシピを開いています。');
       try {
         const detail = await apiRequest('getRecipeDetail', { recipe_id: recipeId });
@@ -1860,6 +1879,7 @@
       if (screenName === 'admin' && !state.isPreview) loadAdminData();
       if (screenName === 'contributors' && !state.isPreview) loadContributorData(false);
       if (screenName === 'favorites') renderRecipeGrid('favorite-recipe-grid', state.home.favorite_recipes, 'お気に入りにしたレシピがここに表示されます。');
+      persistUiState();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -2558,11 +2578,12 @@
       setLoading(true, 'ログアウトしています。');
       try { if (!state.isPreview) await apiRequest('logoutRecipeApp'); } catch (error) { /* local logout continues */ }
       clearStoredAuth();
+      clearStoredUiState();
       state.auth = null;
       state.isGuest = true;
       state.currentDetail = null;
       try {
-        await enterGuestApplication();
+        await enterGuestApplication({ restoreUi: false });
         showToast('ログアウトし、閲覧モードへ戻りました。', 'ok');
       } finally {
         setLoading(false);
@@ -2571,9 +2592,10 @@
 
     function handleSessionExpired(error) {
       clearStoredAuth();
+      clearStoredUiState();
       state.auth = null;
       state.isGuest = true;
-      enterGuestApplication()
+      enterGuestApplication({ restoreUi: false })
         .then(() => showToast('ログインの有効期限が切れたため、閲覧モードへ戻りました。', 'error'))
         .catch(() => {
           showLogin(false);
@@ -2581,7 +2603,8 @@
         });
     }
 
-    function showLogin(expandManagement = false) {
+    function showLogin(expandManagement = false, clearUi = true) {
+      if (clearUi) clearStoredUiState();
       $('app-shell').hidden = true;
       $('login-shell').hidden = false;
       $('login-password').value = '';
@@ -2710,6 +2733,89 @@
 
     function isApiConfigured() {
       return APP_CONFIG.apiUrl && !APP_CONFIG.apiUrl.includes('__RECIPE_GAS_WEB_APP_URL__');
+    }
+
+    function goToPortal() {
+      location.href = (state.app && state.app.portal_url) || APP_CONFIG.portalUrl;
+    }
+
+    function getRestorableScreen(screenName = state.currentScreen) {
+      const publicScreens = ['home', 'recipes', 'favorites', 'detail'];
+      const authenticatedScreens = [...publicScreens, 'admin'];
+      const allowed = state.auth ? authenticatedScreens : publicScreens;
+      if (allowed.includes(screenName)) return screenName;
+      const canManage = Boolean(state.auth && state.auth.capabilities && state.auth.capabilities.can_manage);
+      return canManage ? 'admin' : 'home';
+    }
+
+    function readRecipeFilterState() {
+      return {
+        keyword: $('recipe-keyword') ? $('recipe-keyword').value.trim() : '',
+        category_code: $('recipe-category') ? $('recipe-category').value : '',
+        recipe_class_code: $('recipe-class') ? $('recipe-class').value : ''
+      };
+    }
+
+    function persistUiState() {
+      if (state.isPreview || $('app-shell').hidden) return;
+      const screen = getRestorableScreen();
+      const detailRecipeId = screen === 'detail' && state.currentDetail && state.currentDetail.recipe
+        ? String(state.currentDetail.recipe.recipe_id || '')
+        : '';
+      const stored = {
+        mode: state.auth ? 'authenticated' : 'guest',
+        screen,
+        previous_screen: getRestorableScreen(state.previousScreen || 'recipes'),
+        detail_recipe_id: detailRecipeId,
+        filters: readRecipeFilterState(),
+        saved_at: new Date().toISOString()
+      };
+      try { sessionStorage.setItem(APP_CONFIG.uiStateStorageKey, JSON.stringify(stored)); } catch (error) { /* ignore */ }
+    }
+
+    function loadStoredUiState() {
+      try { return JSON.parse(sessionStorage.getItem(APP_CONFIG.uiStateStorageKey) || 'null'); } catch (error) { return null; }
+    }
+
+    function clearStoredUiState() {
+      try { sessionStorage.removeItem(APP_CONFIG.uiStateStorageKey); } catch (error) { /* ignore */ }
+    }
+
+    async function restoreStoredUiState() {
+      const saved = loadStoredUiState();
+      const expectedMode = state.auth ? 'authenticated' : 'guest';
+      if (!saved || saved.mode !== expectedMode) return false;
+      const filters = saved.filters || {};
+      if ($('recipe-keyword')) $('recipe-keyword').value = filters.keyword || '';
+      if ($('recipe-category')) $('recipe-category').value = filters.category_code || '';
+      if ($('recipe-class')) $('recipe-class').value = filters.recipe_class_code || '';
+      try {
+        if (saved.screen === 'detail' && saved.detail_recipe_id) {
+          await openRecipeDetail(saved.detail_recipe_id, { previousScreen: saved.previous_screen || 'recipes' });
+          return true;
+        }
+        if (saved.screen === 'recipes') {
+          await loadRecipeList();
+          openScreen('recipes');
+          return true;
+        }
+        if (saved.screen === 'favorites') {
+          openScreen('favorites');
+          return true;
+        }
+        if (saved.screen === 'admin' && state.auth && state.auth.capabilities && state.auth.capabilities.can_manage) {
+          openScreen('admin');
+          return true;
+        }
+        if (saved.screen === 'home') {
+          openScreen('home');
+          return true;
+        }
+      } catch (error) {
+        clearStoredUiState();
+        showToast('前回の画面を復元できなかったため、ホームを表示しました。', 'error');
+      }
+      return false;
     }
 
     function storeAuth(auth) {
