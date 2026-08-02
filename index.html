@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7b8a2">
-  <title>梅園レシピ帳 v0.2-3_work</title>
+  <title>梅園レシピ帳 v0.2-4_work</title>
   <style>
     :root {
       --bg: #fff9ef;
@@ -1016,7 +1016,7 @@
         <div class="brand-mini" aria-hidden="true"><span class="icon-slot" data-icon="umezono-dango" data-icon-size="24"></span></div>
         <div class="brand-copy">
           <h1 class="brand-name">梅園レシピ帳</h1>
-          <p class="brand-version">v0.2-3_work</p>
+          <p class="brand-version">v0.2-4_work</p>
         </div>
       </div>
       <div class="topbar-actions">
@@ -1322,7 +1322,7 @@
     'use strict';
 
     const APP_CONFIG = Object.freeze({
-      version: 'v0.2-3_work',
+      version: 'v0.2-4_work',
       apiUrl: 'https://script.google.com/macros/s/AKfycbyvpT8d7SrctV8vHGz1389z6Atn3lkXVfk4pwL-hyJhuF43o2BbS4Ww74tTCENNydnh/exec',
       portalUrl: 'https://umezono-systems.github.io/umezono-portal/',
       timeoutMs: 30000,
@@ -1436,26 +1436,43 @@
         startPreviewMode();
         return;
       }
-      await checkConnection();
+
       const savedAuth = loadStoredAuth();
       const savedUi = loadStoredUiState();
+      const fastRestored = showStoredPublicSnapshot(savedUi);
+
       if (savedAuth && savedAuth.auth_session_token) {
         try {
           state.auth = savedAuth;
-          await validateSession();
-          await enterApplication({ restoreUi: true });
+          await enterApplication({ restoreUi: true, fastRestore: fastRestored, savedUi });
           return;
         } catch (error) {
+          const authFailureCodes = ['AUTH_REQUIRED', 'AUTH_SESSION_EXPIRED', 'ACCOUNT_INACTIVE', 'EMPLOYEE_INACTIVE'];
+          if (fastRestored && !authFailureCodes.includes(error.code)) {
+            state.auth = savedAuth;
+            showToast('最新情報を取得できませんでした。表示中の内容は前回取得時のものです。', 'error');
+            return;
+          }
           clearStoredAuth();
-          clearStoredUiState();
           state.auth = null;
+          state.isGuest = true;
+          if (savedUi && isPublicRestorableScreen(savedUi.screen)) {
+            const guestUi = { ...savedUi, mode: 'guest' };
+            try { sessionStorage.setItem(APP_CONFIG.uiStateStorageKey, JSON.stringify(guestUi)); } catch (storageError) { /* ignore */ }
+            await enterGuestApplication({ restoreUi: true, fastRestore: fastRestored, savedUi: guestUi });
+            showToast('ログインの有効期限が切れたため、閲覧モードで表示しています。', 'error');
+            return;
+          }
+          clearStoredUiState();
           showLogin(false, false);
           return;
         }
       }
       if (savedUi && savedUi.mode === 'guest') {
-        await enterGuestApplication({ restoreUi: true });
+        await enterGuestApplication({ restoreUi: true, fastRestore: fastRestored, savedUi });
+        return;
       }
+      await checkConnection();
     }
 
     function bindEvents() {
@@ -1546,7 +1563,8 @@
         setLoginStatus('HTML内のAPP_CONFIG.apiUrlへGASのWebアプリURLを設定してください。', 'error');
         return;
       }
-      setLoading(true, 'レシピ帳を準備しています。');
+      const useOverlay = !options.fastRestore;
+      if (useOverlay) setLoading(true, 'レシピ帳を準備しています。');
       try {
         clearStoredAuth();
         state.auth = null;
@@ -1558,20 +1576,32 @@
         showApplication();
         renderCategories();
         renderMasterOptions();
-        await loadHomeData();
-        const restored = options.restoreUi ? await restoreStoredUiState() : false;
-        if (!restored) openScreen('home');
+        applyStoredRecipeFilters(options.savedUi || loadStoredUiState());
+        const homePromise = loadHomeData();
+        homePromise.catch(() => {});
+        const restored = options.restoreUi
+          ? await restoreStoredUiState({ savedState: options.savedUi, silent: Boolean(options.fastRestore), homePromise })
+          : false;
+        if (!restored) {
+          await homePromise;
+          openScreen('home');
+        }
       } catch (error) {
+        if (options.fastRestore) {
+          showToast('最新情報を取得できませんでした。表示中の内容は前回取得時のものです。', 'error');
+          return;
+        }
         clearStoredUiState();
         showLogin(false, false);
         setLoginStatus(error.message, 'error');
       } finally {
-        setLoading(false);
+        if (useOverlay) setLoading(false);
       }
     }
 
     async function enterApplication(options = {}) {
-      setLoading(true, 'レシピ帳を準備しています。');
+      const useOverlay = !options.fastRestore;
+      if (useOverlay) setLoading(true, 'レシピ帳を準備しています。');
       try {
         const initial = await apiRequest('getRecipeInitialData');
         state.auth = initial.auth;
@@ -1583,11 +1613,18 @@
         showApplication();
         renderCategories();
         renderMasterOptions();
-        await loadHomeData();
-        const restored = options.restoreUi ? await restoreStoredUiState() : false;
-        if (!restored) openScreen('home');
+        applyStoredRecipeFilters(options.savedUi || loadStoredUiState());
+        const homePromise = loadHomeData();
+        homePromise.catch(() => {});
+        const restored = options.restoreUi
+          ? await restoreStoredUiState({ savedState: options.savedUi, silent: Boolean(options.fastRestore), homePromise })
+          : false;
+        if (!restored) {
+          await homePromise;
+          openScreen('home');
+        }
       } finally {
-        setLoading(false);
+        if (useOverlay) setLoading(false);
       }
     }
 
@@ -1597,6 +1634,8 @@
       if (!state.auth) syncGuestCollections();
       renderHomeCollections();
       renderAdminSummary(home.admin_summary);
+      if (['home', 'favorites'].includes(state.currentScreen)) persistUiState();
+      return home;
     }
 
     function renderHomeCollections() {
@@ -1619,7 +1658,8 @@
     }
 
     async function loadRecipeList(overrides = {}) {
-      setLoading(true, 'レシピを探しています。');
+      const silent = Boolean(overrides.silent);
+      if (!silent) setLoading(true, 'レシピを探しています。');
       try {
         const payload = {
           keyword: overrides.keyword !== undefined ? overrides.keyword : $('recipe-keyword').value.trim(),
@@ -1638,7 +1678,7 @@
         renderRecipeGrid('recipe-list-grid', state.recipeList, '条件に合うレシピがありません。');
         if (state.currentScreen === 'recipes') persistUiState();
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
     }
 
@@ -1700,7 +1740,8 @@
 
     async function openRecipeDetail(recipeId, options = {}) {
       state.previousScreen = options.previousScreen || (state.currentScreen === 'detail' ? 'recipes' : state.currentScreen);
-      setLoading(true, 'レシピを開いています。');
+      const silent = Boolean(options.silent);
+      if (!silent) setLoading(true, 'レシピを開いています。');
       try {
         const detail = await apiRequest('getRecipeDetail', { recipe_id: recipeId });
         state.currentDetail = detail;
@@ -1714,7 +1755,7 @@
         openScreen('detail');
         if (state.auth) apiRequest('recordRecipeView', { recipe_id: recipeId }).catch(() => {});
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
     }
 
@@ -1860,7 +1901,7 @@
       event.returnValue = '';
     }
 
-    function openScreen(screenName) {
+    function openScreen(screenName, options = {}) {
       if (state.currentScreen === 'edit-recipe' && screenName !== 'edit-recipe' && !confirmDiscardDraftChanges()) return;
       if (state.currentScreen === 'contributors' && screenName !== 'contributors' && Object.keys(state.contributorChanges || {}).length) {
         const discard = window.confirm('投稿者設定に未保存の変更があります。変更を破棄して移動しますか？');
@@ -1875,12 +1916,12 @@
       document.querySelectorAll('.screen').forEach((screen) => screen.classList.toggle('is-active', screen.dataset.screen === screenName));
       document.querySelectorAll('[data-nav-screen]').forEach((button) => button.classList.toggle('is-active', button.dataset.navScreen === screenName));
       state.currentScreen = screenName;
-      if (screenName === 'recipes' && !state.recipeList.length && !state.isPreview) loadRecipeList().catch(handleError);
-      if (screenName === 'admin' && !state.isPreview) loadAdminData();
-      if (screenName === 'contributors' && !state.isPreview) loadContributorData(false);
+      if (!options.skipAutoLoad && screenName === 'recipes' && !state.recipeList.length && !state.isPreview) loadRecipeList().catch(handleError);
+      if (!options.skipAutoLoad && screenName === 'admin' && !state.isPreview) loadAdminData();
+      if (!options.skipAutoLoad && screenName === 'contributors' && !state.isPreview) loadContributorData(false);
       if (screenName === 'favorites') renderRecipeGrid('favorite-recipe-grid', state.home.favorite_recipes, 'お気に入りにしたレシピがここに表示されます。');
-      persistUiState();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (!options.skipPersist) persistUiState();
+      window.scrollTo({ top: 0, behavior: options.instant ? 'auto' : 'smooth' });
     }
 
     function applyAuthToUi() {
@@ -2756,6 +2797,61 @@
       };
     }
 
+    function applyStoredRecipeFilters(saved) {
+      const filters = saved && saved.filters ? saved.filters : {};
+      if ($('recipe-keyword')) $('recipe-keyword').value = filters.keyword || '';
+      if ($('recipe-category')) $('recipe-category').value = filters.category_code || '';
+      if ($('recipe-class')) $('recipe-class').value = filters.recipe_class_code || '';
+    }
+
+    function isPublicRestorableScreen(screenName) {
+      return ['home', 'recipes', 'favorites', 'detail'].includes(screenName);
+    }
+
+    function createPublicScreenSnapshot(screen) {
+      if (!isPublicRestorableScreen(screen)) return null;
+      if (screen === 'detail') return state.currentDetail ? { detail: state.currentDetail } : null;
+      if (screen === 'recipes') return { items: state.recipeList || [], result_text: $('recipe-result-line') ? $('recipe-result-line').textContent : '' };
+      if (screen === 'favorites') return { items: (state.home && state.home.favorite_recipes) || [] };
+      return {
+        latest_recipes: (state.home && state.home.latest_recipes) || [],
+        recent_recipes: (state.home && state.home.recent_recipes) || [],
+        favorite_recipes: (state.home && state.home.favorite_recipes) || []
+      };
+    }
+
+    function showStoredPublicSnapshot(saved) {
+      if (!saved || !isPublicRestorableScreen(saved.screen) || !saved.snapshot) return false;
+      try {
+        state.auth = null;
+        state.isGuest = true;
+        applyAuthToUi();
+        applyStoredRecipeFilters(saved);
+        if (saved.screen === 'detail' && saved.snapshot.detail) {
+          state.currentDetail = saved.snapshot.detail;
+          state.previousScreen = saved.previous_screen || 'recipes';
+          renderRecipeDetail(state.currentDetail);
+        } else if (saved.screen === 'recipes') {
+          state.recipeList = Array.isArray(saved.snapshot.items) ? saved.snapshot.items : [];
+          $('recipe-result-line').textContent = saved.snapshot.result_text || `${state.recipeList.length}件`;
+          renderRecipeGrid('recipe-list-grid', state.recipeList, '条件に合うレシピがありません。');
+        } else if (saved.screen === 'favorites') {
+          state.home.favorite_recipes = Array.isArray(saved.snapshot.items) ? saved.snapshot.items : [];
+          renderRecipeGrid('favorite-recipe-grid', state.home.favorite_recipes, 'お気に入りにしたレシピがここに表示されます。');
+        } else if (saved.screen === 'home') {
+          state.home.latest_recipes = saved.snapshot.latest_recipes || [];
+          state.home.recent_recipes = saved.snapshot.recent_recipes || [];
+          state.home.favorite_recipes = saved.snapshot.favorite_recipes || [];
+          renderHomeCollections();
+        }
+        showApplication();
+        openScreen(saved.screen, { skipAutoLoad: true, skipPersist: true, instant: true });
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
     function persistUiState() {
       if (state.isPreview || $('app-shell').hidden) return;
       const screen = getRestorableScreen();
@@ -2768,6 +2864,7 @@
         previous_screen: getRestorableScreen(state.previousScreen || 'recipes'),
         detail_recipe_id: detailRecipeId,
         filters: readRecipeFilterState(),
+        snapshot: createPublicScreenSnapshot(screen),
         saved_at: new Date().toISOString()
       };
       try { sessionStorage.setItem(APP_CONFIG.uiStateStorageKey, JSON.stringify(stored)); } catch (error) { /* ignore */ }
@@ -2781,37 +2878,48 @@
       try { sessionStorage.removeItem(APP_CONFIG.uiStateStorageKey); } catch (error) { /* ignore */ }
     }
 
-    async function restoreStoredUiState() {
-      const saved = loadStoredUiState();
+    async function restoreStoredUiState(options = {}) {
+      const saved = options.savedState || loadStoredUiState();
       const expectedMode = state.auth ? 'authenticated' : 'guest';
       if (!saved || saved.mode !== expectedMode) return false;
-      const filters = saved.filters || {};
-      if ($('recipe-keyword')) $('recipe-keyword').value = filters.keyword || '';
-      if ($('recipe-category')) $('recipe-category').value = filters.category_code || '';
-      if ($('recipe-class')) $('recipe-class').value = filters.recipe_class_code || '';
+      applyStoredRecipeFilters(saved);
+      const homePromise = options.homePromise || Promise.resolve();
       try {
         if (saved.screen === 'detail' && saved.detail_recipe_id) {
-          await openRecipeDetail(saved.detail_recipe_id, { previousScreen: saved.previous_screen || 'recipes' });
+          await openRecipeDetail(saved.detail_recipe_id, {
+            previousScreen: saved.previous_screen || 'recipes',
+            silent: Boolean(options.silent)
+          });
+          homePromise.catch(handleError);
           return true;
         }
         if (saved.screen === 'recipes') {
-          await loadRecipeList();
-          openScreen('recipes');
+          await loadRecipeList({ silent: Boolean(options.silent) });
+          openScreen('recipes', { skipAutoLoad: true, instant: Boolean(options.silent) });
+          homePromise.catch(handleError);
           return true;
         }
         if (saved.screen === 'favorites') {
-          openScreen('favorites');
+          await homePromise;
+          openScreen('favorites', { instant: Boolean(options.silent) });
           return true;
         }
         if (saved.screen === 'admin' && state.auth && state.auth.capabilities && state.auth.capabilities.can_manage) {
-          openScreen('admin');
+          openScreen('admin', { instant: Boolean(options.silent) });
+          homePromise.catch(handleError);
           return true;
         }
         if (saved.screen === 'home') {
-          openScreen('home');
+          await homePromise;
+          openScreen('home', { instant: Boolean(options.silent) });
           return true;
         }
       } catch (error) {
+        if (options.silent && saved.snapshot && isPublicRestorableScreen(saved.screen)) {
+          homePromise.catch(() => {});
+          showToast('最新情報を取得できませんでした。表示中の内容は前回取得時のものです。', 'error');
+          return true;
+        }
         clearStoredUiState();
         showToast('前回の画面を復元できなかったため、ホームを表示しました。', 'error');
       }
