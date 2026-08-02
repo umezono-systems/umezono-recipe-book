@@ -1,0 +1,2697 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7b8a2">
+  <title>梅園レシピ帳 v0.1-38_work</title>
+  <style>
+    :root {
+      --bg: #fff9ef;
+      --bg-deep: #f8eddd;
+      --surface: #ffffff;
+      --surface-soft: #fffdf8;
+      --text: #3b302a;
+      --muted: #806f65;
+      --line: #eadfd2;
+      --brand: #c64f5f;
+      --brand-dark: #9c3345;
+      --brand-soft: #fff0f1;
+      --accent: #eaa36f;
+      --matcha: #708f62;
+      --matcha-soft: #edf4e9;
+      --honey: #d69a27;
+      --danger: #bd3b35;
+      --warning: #9a6500;
+      --shadow: 0 18px 50px rgba(88, 58, 39, 0.11);
+      --shadow-soft: 0 8px 24px rgba(88, 58, 39, 0.08);
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; }
+    html {
+      min-height: 100%;
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+      background: var(--bg);
+    }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 4%, rgba(247, 184, 162, 0.35), transparent 30%),
+        radial-gradient(circle at 92% 14%, rgba(233, 210, 136, 0.28), transparent 26%),
+        linear-gradient(180deg, #fffaf2 0%, #fff7eb 46%, #f8efe3 100%);
+      font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { color: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    [hidden] { display: none !important; }
+
+    .icon-svg {
+      display: block;
+      flex: 0 0 auto;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .icon-svg.is-filled { fill: currentColor; }
+    .button-with-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .icon-slot { display: inline-grid; place-items: center; line-height: 1; }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .login-shell {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: calc(26px + var(--safe-top)) 18px calc(26px + var(--safe-bottom));
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .decor {
+      position: fixed;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.82;
+      filter: blur(0.2px);
+    }
+
+    .decor-one {
+      width: 210px;
+      height: 210px;
+      top: -70px;
+      left: -55px;
+      border-radius: 48% 52% 62% 38%;
+      background: rgba(244, 161, 169, 0.36);
+      transform: rotate(18deg);
+    }
+
+    .decor-two {
+      width: 250px;
+      height: 250px;
+      right: -100px;
+      bottom: -75px;
+      border-radius: 58% 42% 35% 65%;
+      background: rgba(206, 220, 159, 0.36);
+      transform: rotate(-22deg);
+    }
+
+    .login-card {
+      position: relative;
+      z-index: 1;
+      width: min(100%, 470px);
+      padding: 30px;
+      border: 1px solid rgba(224, 207, 191, 0.9);
+      border-radius: var(--radius-xl);
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand-mark {
+      width: 76px;
+      height: 76px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 16px;
+      border: 1px solid rgba(198, 79, 95, 0.13);
+      border-radius: 26px;
+      background: linear-gradient(145deg, #fff4ec, #ffe4e6);
+      box-shadow: 0 12px 30px rgba(198, 79, 95, 0.16);
+      color: var(--brand-dark);
+    }
+
+    .brand-mark .icon-svg { width: 39px; height: 39px; }
+
+    .login-title {
+      margin: 0;
+      text-align: center;
+      font-size: clamp(27px, 7vw, 36px);
+      font-weight: 900;
+      letter-spacing: 0.03em;
+    }
+
+    .login-message {
+      margin: 8px 0 24px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .open-book-panel {
+      display: grid;
+      gap: 12px;
+      margin-top: 22px;
+      padding: 20px;
+      border: 1px solid rgba(214, 154, 39, 0.24);
+      border-radius: 22px;
+      background: linear-gradient(145deg, #fffaf0, #fff2d5);
+      text-align: center;
+    }
+
+    .open-book-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .open-book-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .open-book-button {
+      min-height: 58px;
+      font-size: 17px;
+      letter-spacing: 0.04em;
+    }
+
+    .management-login {
+      margin-top: 34px;
+      padding-top: 22px;
+      border-top: 1px dashed var(--line);
+    }
+
+    .management-login summary {
+      width: fit-content;
+      margin: 0 auto;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 800;
+      list-style-position: inside;
+      user-select: none;
+    }
+
+    .management-login[open] summary {
+      margin-bottom: 17px;
+      color: var(--brand-dark);
+    }
+
+    .management-login .form-grid {
+      padding: 17px;
+      border-radius: 18px;
+      background: var(--surface-soft);
+    }
+
+    .management-login-note {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .form-grid { display: grid; gap: 15px; }
+    .field { display: grid; align-content: start; gap: 7px; }
+    .field-label { font-size: 13px; font-weight: 900; }
+    .field-input {
+      width: 100%;
+      min-height: 50px;
+      padding: 11px 14px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      outline: none;
+      background: #fff;
+      color: var(--text);
+      font-weight: 700;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+    .field-input:focus {
+      border-color: rgba(198, 79, 95, 0.56);
+      box-shadow: 0 0 0 4px rgba(198, 79, 95, 0.11);
+    }
+
+    .primary-button, .secondary-button, .ghost-button, .icon-button {
+      border: 0;
+      cursor: pointer;
+      font-weight: 900;
+      transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease;
+    }
+    .primary-button:active, .secondary-button:active, .ghost-button:active, .icon-button:active { transform: translateY(1px); }
+    button:disabled { cursor: not-allowed; opacity: .5; box-shadow: none !important; }
+
+    .primary-button {
+      min-height: 50px;
+      padding: 12px 18px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--brand), #e07673);
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(198, 79, 95, 0.23);
+    }
+    .secondary-button {
+      min-height: 44px;
+      padding: 10px 15px;
+      border: 1px solid rgba(198, 79, 95, 0.2);
+      border-radius: 14px;
+      background: var(--brand-soft);
+      color: var(--brand-dark);
+    }
+    .ghost-button {
+      min-height: 42px;
+      padding: 9px 13px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255,255,255,.82);
+      color: var(--muted);
+    }
+    .icon-button {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+    .icon-button .icon-svg { width: 20px; height: 20px; }
+
+    .login-status {
+      min-height: 24px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-align: center;
+    }
+    .login-status.is-error { color: var(--danger); }
+    .login-status.is-ok { color: #3f7040; }
+
+    .app-shell {
+      min-height: 100vh;
+      padding-bottom: calc(96px + var(--safe-bottom));
+    }
+
+    .topbar {
+      position: sticky;
+      z-index: 20;
+      top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: calc(12px + var(--safe-top)) max(14px, calc((100vw - 1180px) / 2)) 12px;
+      border-bottom: 1px solid rgba(226, 211, 194, 0.82);
+      background: rgba(255, 250, 242, 0.9);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .brand-mini {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 15px;
+      background: linear-gradient(145deg, #fff0e4, #ffdfe2);
+      color: var(--brand-dark);
+      box-shadow: var(--shadow-soft);
+    }
+    .brand-mini .icon-svg { width: 24px; height: 24px; }
+    .brand-copy { min-width: 0; }
+    .brand-name { margin: 0; font-size: 18px; font-weight: 900; line-height: 1.25; }
+    .brand-version { margin: 2px 0 0; color: var(--muted); font-size: 10px; font-weight: 800; }
+    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    .user-chip {
+      max-width: 210px;
+      display: grid;
+      gap: 1px;
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.78);
+      line-height: 1.25;
+    }
+    .user-chip-name { overflow: hidden; font-size: 12px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+    .user-chip-role { color: var(--muted); font-size: 10px; font-weight: 800; }
+
+    .main {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 18px 14px 34px;
+    }
+
+    .screen { display: none; animation: fadeIn .22s ease; }
+    .screen.is-active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+      padding: 24px;
+      border: 1px solid rgba(222, 199, 179, 0.86);
+      border-radius: var(--radius-xl);
+      background:
+        radial-gradient(circle at 90% 10%, rgba(255,255,255,.75), transparent 30%),
+        linear-gradient(135deg, #ffe9dc, #fff5d9 58%, #eaf3df);
+      box-shadow: var(--shadow-soft);
+    }
+    .hero-illustration {
+      position: absolute;
+      z-index: 0;
+      right: 22px;
+      bottom: -18px;
+      display: grid;
+      place-items: center;
+      color: var(--brand-dark);
+      opacity: .12;
+      transform: rotate(-8deg);
+      pointer-events: none;
+    }
+    .hero > :not(.hero-illustration) {
+      position: relative;
+      z-index: 1;
+    }
+    .hero-illustration .icon-svg {
+      width: clamp(92px, 18vw, 154px);
+      height: clamp(92px, 18vw, 154px);
+      stroke-width: 2;
+    }
+    .eyebrow { color: var(--brand-dark); font-size: 12px; font-weight: 900; letter-spacing: .12em; }
+    .hero-title { max-width: 700px; margin: 5px 0 7px; font-size: clamp(25px, 5vw, 42px); font-weight: 900; line-height: 1.3; }
+    .hero-text { max-width: 640px; margin: 0; color: var(--muted); font-size: 14px; font-weight: 700; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+
+    .search-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 9px;
+      margin-top: 14px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.9);
+      box-shadow: var(--shadow-soft);
+    }
+    .search-input {
+      min-width: 0;
+      min-height: 46px;
+      padding: 10px 14px;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--text);
+      font-weight: 800;
+    }
+    .search-button { min-width: 94px; min-height: 46px; border-radius: 13px; }
+
+    .section { margin-top: 24px; }
+    .section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 11px; }
+    .section-title { margin: 0; font-size: 19px; font-weight: 900; }
+    .section-note { margin: 2px 0 0; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .text-button { border: 0; background: transparent; color: var(--brand-dark); cursor: pointer; font-size: 12px; font-weight: 900; }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .category-card {
+      min-height: 105px;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 6px;
+      padding: 12px 8px;
+      border: 1px solid rgba(224, 211, 195, .9);
+      border-radius: 19px;
+      background: var(--category-bg, #fff);
+      cursor: pointer;
+      box-shadow: var(--shadow-soft);
+      text-align: center;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .category-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .category-icon { display: grid; place-items: center; color: var(--brand-dark); }
+    .category-icon .icon-svg { width: 31px; height: 31px; }
+    .category-name { font-size: 12px; font-weight: 900; }
+
+    .recipe-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 13px;
+    }
+    .recipe-card {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: 145px 1fr;
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 21px;
+      background: var(--surface);
+      box-shadow: var(--shadow-soft);
+      cursor: pointer;
+      text-align: left;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .recipe-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+    .recipe-cover {
+      display: grid;
+      place-items: center;
+      position: relative;
+      background: var(--cover-bg, #fff1df);
+    }
+    .recipe-cover .icon-svg { width: 55px; height: 55px; color: var(--brand-dark); }
+    .recipe-cover::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 15%, rgba(255,255,255,.72), transparent 40%);
+    }
+    .recipe-cover > span { position: relative; z-index: 1; }
+    .favorite-button {
+      position: absolute;
+      z-index: 3;
+      top: 9px;
+      right: 9px;
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,.75);
+      border-radius: 50%;
+      background: rgba(255,255,255,.88);
+      box-shadow: 0 7px 16px rgba(74, 44, 31, .12);
+      cursor: pointer;
+      font-size: 19px;
+    }
+    .favorite-button.is-active { color: #d24154; }
+    .favorite-button .icon-svg { width: 20px; height: 20px; }
+    .recipe-card-body { display: grid; align-content: start; gap: 7px; padding: 13px; min-width: 0; }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 5px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 23px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--brand-soft);
+      color: var(--brand-dark);
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .badge.is-neutral { background: #f3f0eb; color: #6f625a; }
+    .recipe-name { margin: 0; font-size: 16px; font-weight: 900; line-height: 1.45; overflow-wrap: anywhere; }
+    .recipe-summary { margin: 0; color: var(--muted); font-size: 11px; font-weight: 700; line-height: 1.65; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+    .recipe-meta { margin-top: auto; color: var(--muted); font-size: 10px; font-weight: 800; }
+
+    .empty-state {
+      display: grid;
+      place-items: center;
+      gap: 8px;
+      min-height: 180px;
+      padding: 24px;
+      border: 1px dashed #d9c9b8;
+      border-radius: 20px;
+      background: rgba(255,255,255,.66);
+      color: var(--muted);
+      text-align: center;
+    }
+    .empty-icon { color: var(--matcha); }
+    .empty-icon .icon-svg { width: 40px; height: 40px; }
+    .empty-title { margin: 0; color: var(--text); font-size: 15px; font-weight: 900; }
+    .empty-text { margin: 0; font-size: 12px; font-weight: 700; }
+
+    .filter-bar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 190px 190px auto;
+      gap: 9px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: rgba(255,255,255,.86);
+      box-shadow: var(--shadow-soft);
+    }
+    .filter-control {
+      min-width: 0;
+      min-height: 44px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      outline: 0;
+      background: #fff;
+      color: var(--text);
+      font-weight: 800;
+    }
+    .result-line { margin: 12px 2px; color: var(--muted); font-size: 12px; font-weight: 800; }
+
+    .admin-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .summary-card {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: var(--shadow-soft);
+    }
+    .summary-label { color: var(--muted); font-size: 11px; font-weight: 900; }
+    .summary-value { margin-top: 3px; font-size: 26px; font-weight: 900; line-height: 1; }
+    .notice-box {
+      margin-top: 14px;
+      padding: 15px;
+      border: 1px solid #ead497;
+      border-radius: 17px;
+      background: #fff9e8;
+      color: #735700;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .editor-panel {
+      margin-top: 14px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: #fff;
+      box-shadow: var(--shadow-soft);
+    }
+    .form-two-column {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
+      gap: 15px;
+    }
+    .field-textarea { min-height: 112px; resize: vertical; line-height: 1.65; }
+    .field-help { color: var(--muted); font-size: 11px; font-weight: 700; }
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+    .admin-list { display: grid; gap: 10px; margin-top: 16px; }
+    .contributor-panel { margin-top: 22px; }
+    .contributor-toolbar { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:9px; margin-top:12px; }
+    .contributor-save-status { min-height:22px; margin:10px 2px 0; color:var(--muted); font-size:11px; font-weight:800; }
+    .contributor-list { display:grid; gap:8px; margin-top:12px; }
+    .contributor-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:center; padding:12px 14px; border:1px solid var(--line); border-radius:15px; background:#fffdf9; transition:border-color .16s ease, background .16s ease, box-shadow .16s ease; }
+    .contributor-row.is-pending { border-color:rgba(198,79,95,.42); background:#fff5f4; box-shadow:0 0 0 3px rgba(198,79,95,.06); }
+    .contributor-name { font-size:13px; font-weight:900; }
+    .contributor-meta { margin-top:3px; color:var(--muted); font-size:10px; font-weight:800; }
+    .contributor-toggle { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:900; white-space:nowrap; }
+    .contributor-toggle input { width:18px; height:18px; }
+    @media (max-width:680px) { .contributor-toolbar { grid-template-columns:1fr; } .contributor-row { grid-template-columns:1fr; } }
+    .admin-recipe-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 15px 16px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: #fff;
+      box-shadow: var(--shadow-soft);
+    }
+    .admin-recipe-name { margin: 0; font-size: 15px; font-weight: 900; }
+    .admin-recipe-meta { margin-top: 5px; color: var(--muted); font-size: 11px; font-weight: 800; }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--surface-soft);
+      color: var(--brand-dark);
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .status-pill.is-draft { background: #fff0cb; color: #765600; }
+    .status-pill.is-published { background: #e1efe2; color: #285c33; }
+    .create-result { margin-top: 12px; }
+    .editor-section {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+    .editor-section:first-of-type { margin-top: 0; padding-top: 0; border-top: 0; }
+    .editor-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .editor-section-title { margin: 0; font-size: 17px; font-weight: 900; }
+    .editor-section-note { margin: 3px 0 0; color: var(--muted); font-size: 11px; font-weight: 700; }
+    .batch-pattern-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+    .batch-pattern-tabs { display:flex; gap:8px; overflow-x:auto; padding:2px 1px 8px; scrollbar-width:thin; }
+    .batch-pattern-tab { flex:0 0 auto; border:1px solid var(--line); background:#fffaf4; color:var(--text); border-radius:999px; padding:8px 13px; font:inherit; font-size:12px; font-weight:900; cursor:pointer; }
+    .batch-pattern-tab.is-active { background:var(--brand); color:white; border-color:var(--brand); box-shadow:0 5px 13px rgba(137,57,49,.16); }
+    .batch-pattern-panel { border:1px solid #eadbc9; border-radius:18px; background:#fffdf9; padding:15px; margin-bottom:14px; }
+    .batch-pattern-status { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+    .batch-default-label { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:#f5e4d7; color:var(--brand-dark); font-size:11px; font-weight:900; }
+    .batch-default-label.is-default { background:#e5efdc; color:#49623d; }
+    .batch-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .batch-tab-badge { display:inline-flex; align-items:center; margin-left:6px; padding:2px 6px; border-radius:999px; background:#e5efdc; color:#49623d; font-size:9px; font-weight:900; vertical-align:middle; }
+    .choice-stack { display:grid; gap:10px; }
+    .choice-card { display:flex; align-items:flex-start; gap:10px; padding:12px 13px; border:1px solid var(--line); border-radius:14px; background:#fffdf9; cursor:pointer; }
+    .choice-card input { margin-top:3px; }
+    .choice-title { display:block; font-size:13px; font-weight:900; }
+    .choice-note { display:block; margin-top:3px; color:var(--muted); font-size:11px; line-height:1.55; }
+    .scope-option-group { margin-top:14px; padding:14px; border:1px solid #eadbc9; border-radius:16px; background:#fffaf4; }
+    .scope-option-title { margin:0 0 9px; font-size:12px; font-weight:900; color:var(--brand-dark); }
+    .scope-check-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; }
+    .scope-check { display:flex; align-items:center; gap:8px; min-height:40px; padding:8px 10px; border:1px solid #eadbc9; border-radius:12px; background:white; font-size:12px; font-weight:800; }
+    .allergen-status-row { display:grid; grid-template-columns:minmax(0,240px) 1fr; gap:12px; align-items:end; }
+    .allergen-editor-list { display:grid; gap:8px; margin-top:14px; }
+    .allergen-editor-row { display:grid; grid-template-columns:minmax(150px,1fr) minmax(150px,210px) minmax(150px,1fr); gap:9px; align-items:center; padding:10px 11px; border:1px solid #eadbc9; border-radius:13px; background:#fffdf9; }
+    .allergen-editor-check { display:flex; align-items:center; gap:9px; font-size:12px; font-weight:900; }
+    .allergen-class { display:inline-flex; margin-left:5px; padding:2px 6px; border-radius:999px; background:#f3eadf; color:var(--muted); font-size:9px; font-weight:900; }
+    @media (max-width:680px) { .allergen-status-row { grid-template-columns:1fr; } .allergen-editor-row { grid-template-columns:1fr; } }
+    .detail-pattern-tabs { display:flex; gap:8px; overflow-x:auto; margin:14px 0 12px; padding-bottom:5px; }
+    .detail-pattern-tab { flex:0 0 auto; border:1px solid var(--line); background:white; border-radius:999px; padding:8px 13px; font:inherit; font-size:12px; font-weight:900; cursor:pointer; }
+    .detail-pattern-tab.is-active { background:var(--brand); color:white; border-color:var(--brand); }
+    .pattern-adjustment-note { margin-top:10px; padding:10px 12px; border-radius:12px; background:#fff4df; color:#75572e; font-size:12px; font-weight:700; white-space:pre-wrap; }
+    .repeat-list { display: grid; gap: 12px; }
+    .repeat-card {
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fffaf4;
+    }
+    .repeat-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .repeat-card-title { font-size: 12px; font-weight: 900; }
+    .repeat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .repeat-grid .is-wide { grid-column: span 2; }
+    .repeat-grid .is-full { grid-column: 1 / -1; }
+    .small-button {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .small-button.is-danger { color: var(--danger); }
+    .editor-status-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin: 8px 0 15px;
+    }
+    .admin-row-actions { display: flex; align-items: center; gap: 8px; }
+    .draft-save-note { margin-top: 8px; color: var(--muted); font-size: 11px; font-weight: 700; }
+
+    .detail-panel {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+    .detail-hero {
+      position: relative;
+      min-height: 220px;
+      display: grid;
+      place-items: center;
+      padding: 25px;
+      background: var(--detail-bg, #fff0df);
+    }
+    .detail-hero > .icon-svg { width: 92px; height: 92px; color: var(--brand-dark); }
+    .detail-back {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+    }
+    .detail-favorite { position: absolute; top: 14px; right: 14px; z-index: 2; }
+    .detail-content { padding: 22px; }
+    .detail-title { margin: 0; font-size: clamp(25px, 5vw, 38px); font-weight: 900; line-height: 1.35; }
+    .detail-summary { margin: 9px 0 0; color: var(--muted); font-size: 14px; font-weight: 700; }
+    .detail-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 16px;
+    }
+    .detail-meta {
+      padding: 11px 13px;
+      border-radius: 15px;
+      background: #faf6f0;
+    }
+    .detail-meta-label { color: var(--muted); font-size: 10px; font-weight: 900; }
+    .detail-meta-value { margin-top: 2px; font-size: 13px; font-weight: 900; }
+    .detail-section { margin-top: 24px; }
+    .detail-section-title { margin: 0 0 10px; font-size: 18px; font-weight: 900; }
+    .detail-text {
+      margin: 0;
+      padding: 15px;
+      border-radius: 16px;
+      background: #faf7f2;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: pre-wrap;
+    }
+    .ingredient-group { overflow: hidden; margin-top: 10px; border: 1px solid var(--line); border-radius: 16px; }
+    .ingredient-group-title { padding: 9px 13px; background: #fff4e7; font-size: 12px; font-weight: 900; }
+    .ingredient-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; padding: 11px 13px; border-top: 1px solid #f0e7dc; }
+    .ingredient-row:first-of-type { border-top: 0; }
+    .ingredient-name { font-size: 13px; font-weight: 800; }
+    .ingredient-note { color: var(--muted); font-size: 11px; font-weight: 700; }
+    .ingredient-quantity { font-size: 13px; font-weight: 900; white-space: nowrap; }
+    .step-list { display: grid; gap: 11px; }
+    .step-card { display: grid; grid-template-columns: 40px minmax(0,1fr); gap: 11px; padding: 14px; border: 1px solid var(--line); border-radius: 17px; background: #fff; }
+    .step-number { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 14px; background: var(--brand-soft); color: var(--brand-dark); font-weight: 900; }
+    .step-instruction { margin: 0; font-size: 13px; font-weight: 800; white-space: pre-wrap; }
+    .step-info { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .step-chip { padding: 4px 8px; border-radius: 999px; background: #f4f0e9; color: var(--muted); font-size: 10px; font-weight: 900; }
+    .step-check { margin-top: 8px; padding: 9px 11px; border-radius: 12px; background: var(--matcha-soft); color: #4f6e47; font-size: 11px; font-weight: 800; }
+    .alert-text { margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: #fff0ec; color: #9b3c35; font-size: 11px; font-weight: 800; }
+
+    .bottom-nav {
+      position: fixed;
+      z-index: 30;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      display: flex;
+      justify-content: center;
+      padding: 8px 10px calc(8px + var(--safe-bottom));
+      border-top: 1px solid rgba(224, 209, 192, .86);
+      background: rgba(255, 252, 247, .94);
+      backdrop-filter: blur(17px);
+    }
+    .bottom-nav-inner { width: min(650px, 100%); display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+    .nav-button {
+      width: 100%;
+      height: 56px;
+      min-height: 56px;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      grid-template-rows: 24px 14px;
+      place-items: center;
+      align-content: center;
+      gap: 2px;
+      border: 0;
+      border-radius: 16px;
+      appearance: none;
+      -webkit-appearance: none;
+      -webkit-tap-highlight-color: transparent;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 1;
+      transform: none;
+    }
+    .nav-button:active,
+    .nav-button:focus,
+    .nav-button:focus-visible { transform: none; }
+    .nav-button:focus-visible { outline: 2px solid rgba(198, 79, 95, .32); outline-offset: 2px; }
+    .nav-icon { width: 24px; height: 24px; display: grid; place-items: center; line-height: 1; }
+    .nav-icon .icon-svg { width: 21px; height: 21px; display: block; }
+    .nav-button > span:last-child { min-height: 14px; display: grid; place-items: center; line-height: 14px; }
+    .nav-button.is-active { background: var(--brand-soft); color: var(--brand-dark); }
+
+    .loading-overlay {
+      position: fixed;
+      z-index: 100;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(255, 249, 239, .73);
+      backdrop-filter: blur(5px);
+    }
+    .loading-card { min-width: 180px; display: grid; place-items: center; gap: 9px; padding: 22px; border: 1px solid var(--line); border-radius: 21px; background: #fff; box-shadow: var(--shadow); font-size: 12px; font-weight: 900; }
+    .spinner { width: 31px; height: 31px; border: 4px solid #f4ded7; border-top-color: var(--brand); border-radius: 50%; animation: spin .75s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed;
+      z-index: 110;
+      right: 14px;
+      bottom: calc(88px + var(--safe-bottom));
+      max-width: min(390px, calc(100vw - 28px));
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      font-size: 12px;
+      font-weight: 800;
+      animation: toastIn .22s ease;
+    }
+    .toast.is-error { border-color: #efc0bb; background: #fff4f2; color: var(--danger); }
+    .toast.is-ok { border-color: #cce0c5; background: #f4faef; color: #3f7040; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    @media (max-width: 900px) {
+      .category-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .recipe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .filter-bar { grid-template-columns: minmax(0,1fr) 1fr; }
+      .admin-summary-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    }
+
+    @media (max-width: 600px) {
+      .login-card { padding: 24px 19px; }
+      .topbar { padding-right: 10px; padding-left: 10px; }
+      .user-chip { display: none; }
+      .main { padding: 13px 10px 26px; }
+      .hero { padding: 19px 16px; }
+      .hero-illustration { right: 3px; }
+      .search-panel { grid-template-columns: 1fr; }
+      .search-button { width: 100%; }
+      .category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .category-card { min-height: 94px; }
+      .recipe-grid { grid-template-columns: 1fr; }
+      .recipe-card { grid-template-columns: 115px minmax(0,1fr); grid-template-rows: 1fr; min-height: 145px; }
+      .recipe-cover { min-height: 145px; }
+      .filter-bar { grid-template-columns: 1fr; }
+      .admin-summary-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .detail-hero { min-height: 180px; }
+      .form-two-column { grid-template-columns: 1fr; }
+      .form-actions { flex-direction: column-reverse; }
+      .form-actions > button { width: 100%; }
+      .admin-recipe-row { grid-template-columns: 1fr; gap: 9px; }
+      .repeat-grid { grid-template-columns: 1fr; }
+      .repeat-grid .is-wide, .repeat-grid .is-full { grid-column: auto; }
+      .admin-row-actions { justify-content: space-between; }
+      .detail-hero > .icon-svg { width: 72px; height: 72px; }
+      .detail-content { padding: 17px 14px; }
+      .detail-meta-grid { grid-template-columns: 1fr 1fr; }
+      .step-card { grid-template-columns: 35px minmax(0,1fr); padding: 12px; }
+      .step-number { width: 35px; height: 35px; border-radius: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <section id="login-shell" class="login-shell">
+    <div class="decor decor-one" aria-hidden="true"></div>
+    <div class="decor decor-two" aria-hidden="true"></div>
+    <div class="login-card">
+      <div class="brand-mark" aria-hidden="true"><span class="icon-slot" data-icon="umezono-dango" data-icon-size="39"></span></div>
+      <h1 class="login-title">梅園レシピ帳</h1>
+      <p class="login-message">今日もおいしく、丁寧に。</p>
+
+      <div class="open-book-panel">
+        <h2 class="open-book-title">レシピを探す・見る</h2>
+        <p class="open-book-note">全体公開のレシピは、ログインせずに閲覧できます。</p>
+        <button id="guest-open-button" class="primary-button open-book-button button-with-icon" type="button"><span class="icon-slot" data-icon="book-open" data-icon-size="21"></span><span>レシピ帳を開く</span></button>
+      </div>
+
+      <details id="management-login-details" class="management-login">
+        <summary>レシピを登録・編集する方</summary>
+        <p class="management-login-note">レシピの投稿・編集・公開には投稿可能者としてのログインが必要です。</p>
+        <form id="login-form" class="form-grid" autocomplete="on">
+          <label class="field">
+            <span class="field-label">ログインID</span>
+            <input id="login-id" class="field-input" type="text" autocomplete="username" maxlength="100" required>
+          </label>
+          <label class="field">
+            <span class="field-label">パスワード</span>
+            <input id="login-password" class="field-input" type="password" autocomplete="current-password" maxlength="200" required>
+          </label>
+          <button id="login-button" class="secondary-button button-with-icon" type="submit"><span class="icon-slot" data-icon="log-in" data-icon-size="18"></span><span>編集・管理者としてログイン</span></button>
+        </form>
+      </details>
+
+      <div id="login-status" class="login-status" role="status" aria-live="polite">接続を確認しています。</div>
+    </div>
+  </section>
+
+  <div id="app-shell" class="app-shell" hidden>
+    <header class="topbar">
+      <div class="brand-row">
+        <div class="brand-mini" aria-hidden="true"><span class="icon-slot" data-icon="umezono-dango" data-icon-size="24"></span></div>
+        <div class="brand-copy">
+          <h1 class="brand-name">梅園レシピ帳</h1>
+          <p class="brand-version">v0.1-38_work</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="user-chip">
+          <span id="user-name" class="user-chip-name">-</span>
+          <span id="user-role" class="user-chip-role">-</span>
+        </div>
+        <button id="portal-button" class="icon-button" type="button" title="梅園ポータルへ戻る" aria-label="梅園ポータルへ戻る"><span class="icon-slot" data-icon="home" data-icon-size="20"></span></button>
+        <button id="management-login-button" class="icon-button" type="button" title="編集・管理者ログイン" aria-label="編集・管理者ログイン"><span class="icon-slot" data-icon="lock-keyhole" data-icon-size="20"></span></button>
+        <button id="logout-button" class="icon-button" type="button" title="ログアウト" aria-label="ログアウト" hidden><span class="icon-slot" data-icon="log-out" data-icon-size="20"></span></button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section id="screen-home" class="screen is-active" data-screen="home">
+        <div class="hero">
+          <div class="hero-illustration" aria-hidden="true"><span class="icon-slot" data-icon="umezono-dango" data-icon-size="150"></span></div>
+          <div class="eyebrow">UMEZONO RECIPE BOOK</div>
+          <h2 class="hero-title">作りたいレシピを、すぐそばに。</h2>
+          <p class="hero-text">店舗や製造部にあるレシピを一箇所へ。材料名からでも、カテゴリからでも探せます。</p>
+          <div class="hero-actions">
+            <button id="hero-all-recipes" class="primary-button button-with-icon" type="button"><span class="icon-slot" data-icon="search" data-icon-size="18"></span><span>レシピを探す</span></button>
+            <button id="hero-new-recipe" class="secondary-button button-with-icon" type="button" hidden><span class="icon-slot" data-icon="plus" data-icon-size="18"></span><span>新しいレシピ</span></button>
+          </div>
+        </div>
+
+        <form id="home-search-form" class="search-panel">
+          <input id="home-search-input" class="search-input" type="search" placeholder="レシピ名・材料名から探す" aria-label="レシピ名・材料名から検索">
+          <button class="primary-button search-button button-with-icon" type="submit"><span class="icon-slot" data-icon="search" data-icon-size="17"></span><span>検索</span></button>
+        </form>
+
+        <section id="recent-section" class="section">
+          <div class="section-head">
+            <div>
+              <h3 class="section-title">最近見たレシピ</h3>
+              <p class="section-note">直近で開いたレシピへ、すぐに戻れます。</p>
+            </div>
+            <button id="clear-recent-button" class="text-button" type="button">履歴を消す</button>
+          </div>
+          <div id="recent-recipe-grid" class="recipe-grid"></div>
+        </section>
+
+        <section id="home-favorite-section" class="section">
+          <div class="section-head">
+            <div>
+              <h3 class="section-title">お気に入り</h3>
+              <p class="section-note">よく使うレシピを手元にまとめられます。</p>
+            </div>
+            <button class="text-button" type="button" data-open-screen="favorites">すべて見る →</button>
+          </div>
+          <div id="home-favorite-recipe-grid" class="recipe-grid"></div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h3 class="section-title">カテゴリから探す</h3>
+              <p class="section-note">気になるカテゴリを選んでください。</p>
+            </div>
+          </div>
+          <div id="category-grid" class="category-grid"></div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <h3 class="section-title">新しく公開されたレシピ</h3>
+              <p class="section-note">最近追加・更新されたレシピです。</p>
+            </div>
+            <button class="text-button" type="button" data-open-screen="recipes">すべて見る →</button>
+          </div>
+          <div id="latest-recipe-grid" class="recipe-grid"></div>
+        </section>
+      </section>
+
+      <section id="screen-recipes" class="screen" data-screen="recipes">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">レシピを探す</h2>
+            <p class="section-note">複数の言葉はAND検索になります。</p>
+          </div>
+        </div>
+        <form id="recipe-filter-form" class="filter-bar">
+          <input id="recipe-keyword" class="filter-control" type="search" placeholder="レシピ名・材料名">
+          <select id="recipe-category" class="filter-control" aria-label="カテゴリ">
+            <option value="">すべてのカテゴリ</option>
+          </select>
+          <select id="recipe-class" class="filter-control" aria-label="レシピ区分">
+            <option value="">すべての区分</option>
+          </select>
+          <button class="primary-button button-with-icon" type="submit"><span class="icon-slot" data-icon="search" data-icon-size="17"></span><span>絞り込む</span></button>
+        </form>
+        <div id="recipe-result-line" class="result-line">0件</div>
+        <div id="recipe-list-grid" class="recipe-grid"></div>
+      </section>
+
+      <section id="screen-favorites" class="screen" data-screen="favorites">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">お気に入り</h2>
+            <p class="section-note">よく使うレシピをまとめて確認できます。</p>
+          </div>
+        </div>
+        <div id="favorite-recipe-grid" class="recipe-grid"></div>
+      </section>
+
+      <section id="screen-admin" class="screen" data-screen="admin">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">レシピ管理</h2>
+            <p class="section-note">投稿可能者全員で下書き・公開版を共同管理します。</p>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:9px">
+            <button id="admin-open-contributors" class="secondary-button button-with-icon" type="button" hidden><span class="icon-slot" data-icon="users" data-icon-size="18"></span><span>投稿者管理</span></button>
+            <button id="admin-new-recipe" class="primary-button button-with-icon" type="button" disabled><span class="icon-slot" data-icon="plus" data-icon-size="18"></span><span>新しいレシピ</span></button>
+          </div>
+        </div>
+        <div id="admin-summary-grid" class="admin-summary-grid"></div>
+        <div class="notice-box">下書きは投稿可能者全員が編集・正式公開できます。公開中のレシピを変更するときは「新版作成」から新しい下書きを作ります。この画面では社員マスタを読み込みません。</div>
+        <div id="admin-recipe-list" class="admin-list"></div>
+      </section>
+
+      <section id="screen-contributors" class="screen" data-screen="contributors">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">投稿者管理</h2>
+            <p class="section-note">社員マスタから投稿可能者を登録・解除します。</p>
+          </div>
+          <button id="contributors-back-button" class="ghost-button button-with-icon" type="button"><span class="icon-slot" data-icon="arrow-left" data-icon-size="17"></span><span>レシピ管理へ戻る</span></button>
+        </div>
+        <section id="contributor-admin-section" class="editor-panel contributor-panel">
+          <div class="editor-section-head">
+            <div><h3 class="editor-section-title">投稿可能者の登録</h3><p class="editor-section-note">この画面を開いたときだけ社員マスタを読み込みます。投稿には社員マスタのログインアカウントが必要です。</p></div>
+          </div>
+          <div id="contributor-connection-status" class="notice-box">社員マスタの接続状況を確認しています。</div>
+          <div class="contributor-toolbar">
+            <input id="contributor-search" class="field-input" type="search" placeholder="社員番号・氏名・部署・勤務地で検索">
+            <button id="contributor-reload" class="secondary-button button-with-icon" type="button"><span class="icon-slot" data-icon="refresh-cw" data-icon-size="17"></span><span>最新情報を再読込</span></button>
+            <button id="contributor-save" class="primary-button button-with-icon" type="button" disabled><span class="icon-slot" data-icon="save" data-icon-size="17"></span><span>変更を保存（0件）</span></button>
+          </div>
+          <div id="contributor-save-status" class="contributor-save-status">チェックを変更してから、まとめて保存してください。</div>
+          <div id="contributor-list" class="contributor-list"></div>
+        </section>
+      </section>
+
+      <section id="screen-create-recipe" class="screen" data-screen="create-recipe">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">新しいレシピ</h2>
+            <p class="section-note">まず基本情報を登録し、Ver.1の下書きを作成します。</p>
+          </div>
+        </div>
+        <form id="create-recipe-form" class="editor-panel">
+          <div class="form-two-column">
+            <label class="field">
+              <span class="field-label">レシピ名 *</span>
+              <input id="create-recipe-name" class="field-input" type="text" maxlength="100" required placeholder="例：みたらしタレ">
+            </label>
+            <label class="field">
+              <span class="field-label">カテゴリ *</span>
+              <select id="create-category" class="field-input" required></select>
+            </label>
+            <label class="field">
+              <span class="field-label">レシピ区分 *</span>
+              <select id="create-recipe-class" class="field-input" required></select>
+            </label>
+          </div>
+          <label class="field" style="margin-top:15px">
+            <span class="field-label">概要</span>
+            <textarea id="create-summary" class="field-input field-textarea" maxlength="300" placeholder="レシピの用途や特徴を簡潔に入力します。"></textarea>
+            <span class="field-help">材料や工程が未入力でも、下書きとして保存できます。</span>
+          </label>
+          <div id="create-recipe-result" class="create-result" role="status" aria-live="polite"></div>
+          <div class="form-actions">
+            <button id="create-recipe-cancel" class="ghost-button button-with-icon" type="button"><span class="icon-slot" data-icon="arrow-left" data-icon-size="17"></span><span>管理画面へ戻る</span></button>
+            <button id="create-recipe-submit" class="primary-button button-with-icon" type="submit"><span class="icon-slot" data-icon="save" data-icon-size="18"></span><span>Ver.1下書きを作成</span></button>
+          </div>
+        </form>
+      </section>
+
+      <section id="screen-edit-recipe" class="screen" data-screen="edit-recipe">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">レシピを編集</h2>
+            <p class="section-note">Ver.1下書きの基本情報・材料・工程を保存します。</p>
+          </div>
+        </div>
+        <form id="edit-recipe-form" class="editor-panel">
+          <div id="edit-recipe-heading"></div>
+
+          <section class="editor-section">
+            <div class="editor-section-head"><div><h3 class="editor-section-title">基本情報</h3><p class="editor-section-note">レシピ全体で共通する内容を入力します。</p></div></div>
+            <div class="form-two-column">
+              <label class="field"><span class="field-label">レシピ名 *</span><input id="edit-recipe-name" class="field-input" type="text" maxlength="100" required></label>
+              <label class="field"><span class="field-label">カテゴリ *</span><select id="edit-category" class="field-input" required></select></label>
+              <label class="field"><span class="field-label">レシピ区分 *</span><select id="edit-recipe-class" class="field-input" required></select></label>
+              <label class="field"><span class="field-label">保存方法</span><input id="edit-storage-method" class="field-input" type="text" maxlength="1000"></label>
+              <label class="field"><span class="field-label">日持ち・期限の補足</span><input id="edit-shelf-life-note" class="field-input" type="text" maxlength="1000"></label>
+            </div>
+            <label class="field" style="margin-top:12px"><span class="field-label">概要</span><textarea id="edit-summary" class="field-input field-textarea" maxlength="300"></textarea></label>
+            <label class="field" style="margin-top:12px"><span class="field-label">下準備</span><textarea id="edit-preparation" class="field-input field-textarea" maxlength="2000"></textarea></label>
+            <label class="field" style="margin-top:12px"><span class="field-label">仕上がりの確認</span><textarea id="edit-quality-check" class="field-input field-textarea" maxlength="1000"></textarea></label>
+            <label class="field" style="margin-top:12px"><span class="field-label">注意事項</span><textarea id="edit-caution" class="field-input field-textarea" maxlength="2000"></textarea></label>
+          </section>
+
+          <section class="editor-section">
+            <div class="editor-section-head">
+              <div><h3 class="editor-section-title">仕込み量と材料</h3><p class="editor-section-note">1本分・1.5本分などを同じレシピ内に登録します。材料は選択中の仕込み量ごとに保存されます。</p></div>
+            </div>
+            <div class="batch-pattern-toolbar">
+              <div id="batch-pattern-tabs" class="batch-pattern-tabs"></div>
+              <div class="batch-actions">
+                <button id="add-batch-pattern-button" class="small-button button-with-icon" type="button"><span class="icon-slot" data-icon="plus" data-icon-size="15"></span><span>仕込み量を追加</span></button>
+                <button id="copy-batch-pattern-button" class="small-button button-with-icon" type="button"><span class="icon-slot" data-icon="copy" data-icon-size="15"></span><span>現在を複製</span></button>
+              </div>
+            </div>
+            <div class="batch-pattern-panel">
+              <div class="batch-pattern-status">
+                <span id="batch-default-status" class="batch-default-label">追加の仕込み量</span>
+                <div class="batch-actions">
+                  <button id="set-default-pattern-button" class="small-button" type="button">この仕込み量を基準にする</button>
+                  <button id="delete-batch-pattern-button" class="small-button is-danger" type="button">この仕込み量を削除</button>
+                </div>
+              </div>
+              <div class="form-two-column">
+                <label class="field"><span class="field-label">仕込み量名 *</span><input id="edit-pattern-name" class="field-input" type="text" maxlength="100" placeholder="例：1本分"></label>
+                <label class="field"><span class="field-label">基準に対する倍率</span><input id="edit-pattern-multiplier" class="field-input" type="number" min="0.001" step="0.001" placeholder="例：1.5"></label>
+                <label class="field"><span class="field-label">仕上がり数量</span><input id="edit-pattern-yield-quantity" class="field-input" type="number" min="0" step="0.001" placeholder="例：1"></label>
+                <label class="field"><span class="field-label">仕上がり単位</span><select id="edit-pattern-yield-unit" class="field-input"></select></label>
+                <label class="field is-wide"><span class="field-label">仕上がり説明</span><input id="edit-pattern-yield-note" class="field-input" type="text" maxlength="100" placeholder="例：瓶1本分"></label>
+              </div>
+              <label class="field" style="margin-top:12px"><span class="field-label">この仕込み量だけの工程補足</span><textarea id="edit-pattern-adjustment-note" class="field-input field-textarea" maxlength="1000" placeholder="例：1.5本分は加熱時間を目安として5分延長し、艶と濃度で判断する。"></textarea></label>
+              <div class="editor-section-head" style="margin-top:16px">
+                <div><h4 class="editor-section-title">材料</h4><p class="editor-section-note">選択中の仕込み量に使用する確定数量を入力します。</p></div>
+                <button id="add-ingredient-button" class="small-button button-with-icon" type="button"><span class="icon-slot" data-icon="plus" data-icon-size="15"></span><span>材料を追加</span></button>
+              </div>
+              <div id="ingredient-editor-list" class="repeat-list"></div>
+            </div>
+          </section>
+
+          <section class="editor-section">
+            <div class="editor-section-head">
+              <div><h3 class="editor-section-title">工程</h3><p class="editor-section-note">製造順に1工程ずつ追加します。</p></div>
+              <button id="add-step-button" class="small-button button-with-icon" type="button"><span class="icon-slot" data-icon="plus" data-icon-size="15"></span><span>工程を追加</span></button>
+            </div>
+            <div id="step-editor-list" class="repeat-list"></div>
+          </section>
+
+          <section class="editor-section">
+            <div class="editor-section-head"><div><h3 class="editor-section-title">使用場所</h3><p class="editor-section-note">このレシピを実際に使用している製造部・店舗を設定します。閲覧制限には使用しません。</p></div></div>
+            <div class="choice-stack">
+              <label class="choice-card"><input type="radio" name="edit-scope-mode" value="all"><span><span class="choice-title">全社共通で使用</span><span class="choice-note">全社で共通して使用するレシピとして表示します。</span></span></label>
+              <label class="choice-card"><input type="radio" name="edit-scope-mode" value="selected"><span><span class="choice-title">使用場所を選択</span><span class="choice-note">実際に使用している製造部・店舗を複数選択できます。</span></span></label>
+            </div>
+            <div id="edit-scope-options" class="scope-option-group"></div>
+          </section>
+
+          <section class="editor-section">
+            <div class="editor-section-head"><div><h3 class="editor-section-title">アレルゲン確認</h3><p class="editor-section-note">未確認と「確認済み・該当なし」を明確に区別します。</p></div></div>
+            <div class="allergen-status-row">
+              <label class="field"><span class="field-label">確認状態</span><select id="edit-allergen-status" class="field-input"><option value="unconfirmed">未確認</option><option value="confirmed_none">確認済み・該当なし</option><option value="confirmed_present">確認済み・該当あり</option></select></label>
+              <div id="allergen-status-help" class="field-help">材料を確認後、状態を選択してください。</div>
+            </div>
+            <div id="allergen-editor-list" class="allergen-editor-list"></div>
+          </section>
+
+          <div id="edit-recipe-result" class="create-result" role="status" aria-live="polite"></div>
+          <div class="form-actions">
+            <button id="edit-recipe-cancel" class="ghost-button button-with-icon" type="button"><span class="icon-slot" data-icon="arrow-left" data-icon-size="17"></span><span>管理画面へ戻る</span></button>
+            <button class="secondary-button button-with-icon" type="submit"><span class="icon-slot" data-icon="save" data-icon-size="18"></span><span>下書きを保存</span></button>
+            <button id="publish-draft-button" class="primary-button button-with-icon" type="button"><span class="icon-slot" data-icon="send" data-icon-size="18"></span><span>保存して正式公開</span></button>
+          </div>
+          <div class="draft-save-note">正式公開後の内容を変更するときは、新版下書きを作成します。保存時に同時編集も確認します。</div>
+        </form>
+      </section>
+
+      
+
+      
+
+      <section id="screen-detail" class="screen" data-screen="detail">
+        <div id="detail-container"></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="メインメニュー">
+      <div id="bottom-nav-inner" class="bottom-nav-inner">
+        <button class="nav-button is-active" type="button" data-nav-screen="home"><span class="nav-icon icon-slot" data-icon="home" data-icon-size="21"></span><span>ホーム</span></button>
+        <button class="nav-button" type="button" data-nav-screen="recipes"><span class="nav-icon icon-slot" data-icon="book-open" data-icon-size="21"></span><span>レシピ</span></button>
+        <button id="favorites-nav-button" class="nav-button" type="button" data-nav-screen="favorites"><span class="nav-icon icon-slot" data-icon="heart" data-icon-size="21"></span><span>お気に入り</span></button>
+        <button id="admin-nav-button" class="nav-button" type="button" data-nav-screen="admin" hidden><span class="nav-icon icon-slot" data-icon="settings" data-icon-size="21"></span><span>管理</span></button>
+      </div>
+    </nav>
+  </div>
+
+  <div id="loading-overlay" class="loading-overlay" hidden>
+    <div class="loading-card"><div class="spinner" aria-hidden="true"></div><span id="loading-text">読み込んでいます。</span></div>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script>
+    'use strict';
+
+    const APP_CONFIG = Object.freeze({
+      version: 'v0.1-38_work',
+      apiUrl: 'https://script.google.com/macros/s/AKfycbyvpT8d7SrctV8vHGz1389z6Atn3lkXVfk4pwL-hyJhuF43o2BbS4Ww74tTCENNydnh/exec',
+      portalUrl: 'https://umezono-systems.github.io/umezono-portal/',
+      timeoutMs: 30000,
+      contributorTimeoutMs: 60000,
+      sessionStorageKey: 'umezono_recipe_auth_v01',
+      recentStorageKey: 'umezono_recipe_recent_v01',
+      favoriteStorageKey: 'umezono_recipe_favorites_v01',
+      maxLocalRecent: 6,
+      excludedWorkplaceCodes: Object.freeze(['isetan']),
+      enablePreviewQuery: true
+    });
+
+    const ICON_PATHS = Object.freeze({
+      'book-open': '<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>',
+      home: '<path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/>',
+      search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+      heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>',
+      settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1z"/>',
+      'lock-keyhole': '<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><path d="M12 15v2"/>',
+      'log-in': '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/>',
+      'log-out': '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+      plus: '<path d="M12 5v14M5 12h14"/>',
+      copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+      pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/>',
+      save: '<path d="M4 3h14l2 2v16H4z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/>',
+      'arrow-left': '<path d="m15 18-6-6 6-6"/><path d="M21 12H9"/>',
+      sprout: '<path d="M7 20h10"/><path d="M12 20v-8"/><path d="M12 13c-3 0-5-2-5-5 3 0 5 1 5 4"/><path d="M12 11c0-3 2-5 5-5 0 3-2 5-5 5"/>',
+      dango: '<rect x="6" y="2" width="12" height="4" rx="1.2"/><rect x="6" y="6" width="12" height="4" rx="1.2"/><rect x="6" y="10" width="12" height="4" rx="1.2"/><rect x="6" y="14" width="12" height="4" rx="1.2"/><path d="M12 18v4"/>',
+      'umezono-dango': '<rect x="6" y="2" width="12" height="4" rx="1.2"/><rect x="6" y="6" width="12" height="4" rx="1.2"/><rect x="6" y="10" width="12" height="4" rx="1.2"/><rect x="6" y="14" width="12" height="4" rx="1.2"/><path d="M12 18v4"/>',
+      droplets: '<path d="M7 3s4 4.4 4 7.5A4 4 0 0 1 3 10.5C3 7.4 7 3 7 3z"/><path d="M17 7s4 4.4 4 7.5a4 4 0 0 1-8 0C13 11.4 17 7 17 7z"/>',
+      flower: '<circle cx="12" cy="12" r="2"/><path d="M12 10c-2.7-1.6-3.4-4.7-1.6-6.5C12.2 1.7 15.3 2.4 16 5.4 18.7 4 21.5 5.4 21.8 8c.3 2.5-1.8 4.6-4.8 4 1.4 2.8 0 5.7-2.6 6.2-2.5.5-4.8-1.4-4.4-4.5-3.1.6-5.4-1.6-5-4.2.4-2.6 3-4.1 5.8-2.8"/>',
+      cookie: '<circle cx="12" cy="12" r="8"/><circle cx="9" cy="9" r=".7" fill="currentColor" stroke="none"/><circle cx="15" cy="8" r=".7" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r=".7" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r=".7" fill="currentColor" stroke="none"/>',
+      'cake-slice': '<path d="M4 19h16"/><path d="M5 19V9l14-4v14"/><path d="M5 11h14"/><path d="M9 8v3M14 6.5V11"/>',
+      cup: '<path d="M4 7h13v8a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 9h1a3 3 0 0 1 0 6h-1"/><path d="M8 3v2M12 3v2"/>',
+      utensils: '<path d="M6 3v8M3 3v5a3 3 0 0 0 6 0V3M6 11v10"/><path d="M17 3c-2 2-3 5-3 8h5V3h-2zM17 11v10"/>',
+      'cooking-pot': '<path d="M5 9h14l-1 10H6z"/><path d="M8 5h8M10 5V3h4v2M3 11H1M23 11h-2"/>',
+      archive: '<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9M10 13h4"/>',
+      send: '<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>',
+      'undo-2': '<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v1"/>',
+      'badge-check': '<path d="M7.5 3.5 10 2l2 2 2-2 2.5 1.5L19 3l.5 2.5L22 7l-1.5 2 .5 2.5-2 1.5-.5 2.5L16 17l-2 2-2-2-2 2-2-2-2.5-1.5L5 13l-2-1.5L3.5 9 2 7l2.5-1.5L5 3z"/><path d="m8.5 10.5 2 2 5-5"/>',
+      users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+      'refresh-cw': '<path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5"/>'
+    });
+
+    const CATEGORY_ICON_MAP = Object.freeze({
+      bean: 'sprout', dango: 'umezono-dango', syrup: 'droplets', wagashi: 'flower', oven: 'cookie',
+      jelly: 'cake-slice', drink: 'cup', meal: 'utensils', mixing_bowl: 'cooking-pot', recipe: 'book-open'
+    });
+
+    const COLOR_MAP = Object.freeze({
+      azuki: '#f4dedf', sakura: '#ffe1e6', honey: '#fff0c9', ume: '#f6dde8',
+      kinako: '#f2e3c3', mizu: '#dff1f3', matcha: '#e0ecd8', mikan: '#ffe2c4',
+      cream: '#f7eedf', gray: '#ece9e5'
+    });
+
+    const ROLE_LABELS = Object.freeze({
+      viewer: '閲覧者', editor: '投稿可能者', approver: '旧確認者（閲覧のみ）', admin: 'レシピ管理者', system_admin: 'システム管理者'
+    });
+
+    const state = {
+      auth: null,
+      masters: { categories: [], recipe_classes: [], units: [], allergens: [], organizations: { departments: [], workplaces: [], sections: [] } },
+      app: null,
+      adminItems: [],
+      home: { latest_recipes: [], recent_recipes: [], favorite_recipes: [], admin_summary: null },
+      recipeList: [],
+      currentScreen: 'home',
+      previousScreen: 'home',
+      currentDetail: null,
+      isPreview: false,
+      toastTimer: null,
+      isGuest: true,
+      draftEditor: null,
+      contributors: [],
+      contributorFilter: '',
+      contributorChanges: {},
+      contributorSaving: false,
+      batchPatternEditor: { patterns: [], activeKey: '' }
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function iconSvg(name, size = 24, className = '') {
+      const paths = ICON_PATHS[name] || ICON_PATHS['book-open'];
+      const safeSize = Number.isFinite(Number(size)) ? Number(size) : 24;
+      const classes = ['icon-svg', className].filter(Boolean).join(' ');
+      return `<svg class="${classes}" width="${safeSize}" height="${safeSize}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${paths}</svg>`;
+    }
+
+    function categoryIconSvg(iconKey, size = 32) {
+      return iconSvg(CATEGORY_ICON_MAP[iconKey] || 'book-open', size);
+    }
+
+    function hydrateIcons(root = document) {
+      root.querySelectorAll('[data-icon]').forEach((slot) => {
+        slot.innerHTML = iconSvg(slot.dataset.icon || 'book-open', Number(slot.dataset.iconSize || 24), slot.dataset.iconClass || '');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeApp);
+
+    async function initializeApp() {
+      hydrateIcons();
+      bindEvents();
+      state.isPreview = APP_CONFIG.enablePreviewQuery && new URLSearchParams(location.search).get('preview') === '1';
+      if (state.isPreview) {
+        startPreviewMode();
+        return;
+      }
+      await checkConnection();
+      const saved = loadStoredAuth();
+      if (saved && saved.auth_session_token) {
+        try {
+          state.auth = saved;
+          await validateSession();
+          await enterApplication();
+        } catch (error) {
+          clearStoredAuth();
+          state.auth = null;
+          showLogin();
+        }
+      }
+    }
+
+    function bindEvents() {
+      $('guest-open-button').addEventListener('click', enterGuestApplication);
+      $('login-form').addEventListener('submit', handleLogin);
+      $('management-login-button').addEventListener('click', () => showLogin(true));
+      $('logout-button').addEventListener('click', handleLogout);
+      $('portal-button').addEventListener('click', () => { location.href = (state.app && state.app.portal_url) || APP_CONFIG.portalUrl; });
+      $('hero-all-recipes').addEventListener('click', () => openScreen('recipes'));
+      $('hero-new-recipe').addEventListener('click', openCreateRecipeScreen);
+      $('admin-new-recipe').addEventListener('click', openCreateRecipeScreen);
+      $('admin-open-contributors').addEventListener('click', () => openScreen('contributors'));
+      $('contributors-back-button').addEventListener('click', () => openScreen('admin'));
+      $('home-search-form').addEventListener('submit', handleHomeSearch);
+      $('recipe-filter-form').addEventListener('submit', handleRecipeFilter);
+      $('clear-recent-button').addEventListener('click', clearRecentRecipes);
+      $('create-recipe-form').addEventListener('submit', handleCreateRecipe);
+      $('create-recipe-cancel').addEventListener('click', () => openScreen('admin'));
+      $('edit-recipe-form').addEventListener('submit', handleUpdateRecipeDraft);
+      $('publish-draft-button').addEventListener('click', handleSaveAndPublish);
+      $('edit-recipe-cancel').addEventListener('click', () => openScreen('admin'));
+      $('contributor-search').addEventListener('input', () => {
+        state.contributorFilter = $('contributor-search').value.trim().toLowerCase();
+        renderContributorList();
+      });
+      $('contributor-reload').addEventListener('click', () => loadContributorData(true));
+      $('contributor-save').addEventListener('click', handleSaveContributorChanges);
+      $('add-batch-pattern-button').addEventListener('click', addBatchPattern);
+      $('copy-batch-pattern-button').addEventListener('click', copyActiveBatchPattern);
+      $('set-default-pattern-button').addEventListener('click', setActiveBatchPatternAsDefault);
+      $('delete-batch-pattern-button').addEventListener('click', deleteActiveBatchPattern);
+      document.querySelectorAll('input[name="edit-scope-mode"]').forEach((input) => input.addEventListener('change', updateScopeEditorVisibility));
+      $('edit-allergen-status').addEventListener('change', updateAllergenEditorVisibility);
+      $('add-ingredient-button').addEventListener('click', () => addIngredientEditorRow({}));
+      $('add-step-button').addEventListener('click', () => addStepEditorRow({}));
+      document.querySelectorAll('[data-open-screen]').forEach((button) => button.addEventListener('click', () => openScreen(button.dataset.openScreen)));
+      document.querySelectorAll('[data-nav-screen]').forEach((button) => button.addEventListener('click', () => openScreen(button.dataset.navScreen)));
+      window.addEventListener('pageshow', handlePageShow);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden && state.auth && !state.isPreview) validateSessionQuietly(); });
+    }
+
+    async function checkConnection() {
+      if (!isApiConfigured()) {
+        $('guest-open-button').disabled = true;
+        setLoginStatus('GASのWebアプリURLがまだ設定されていません。', 'error');
+        return;
+      }
+      try {
+        await apiRequest('pingRecipeApp', {}, false);
+        $('guest-open-button').disabled = false;
+        setLoginStatus('接続できます。レシピ帳を開けます。', 'ok');
+      } catch (error) {
+        $('guest-open-button').disabled = true;
+        setLoginStatus(error.message, 'error');
+      }
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      if (!isApiConfigured()) {
+        setLoginStatus('HTML内のAPP_CONFIG.apiUrlへGASのWebアプリURLを設定してください。', 'error');
+        return;
+      }
+      const loginId = $('login-id').value.trim();
+      const password = $('login-password').value;
+      if (!loginId || !password) return;
+      setLoading(true, 'ログインしています。');
+      try {
+        const result = await apiRequest('loginRecipeApp', { login_id: loginId, password }, false);
+        state.auth = result.auth;
+        storeAuth(state.auth);
+        $('login-password').value = '';
+        await enterApplication();
+      } catch (error) {
+        setLoginStatus(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function enterGuestApplication() {
+      if (!isApiConfigured()) {
+        setLoginStatus('HTML内のAPP_CONFIG.apiUrlへGASのWebアプリURLを設定してください。', 'error');
+        return;
+      }
+      setLoading(true, 'レシピ帳を準備しています。');
+      try {
+        clearStoredAuth();
+        state.auth = null;
+        state.isGuest = true;
+        const initial = await apiRequest('getRecipeInitialData', {}, false);
+        state.masters = initial.masters || state.masters;
+        state.app = initial.app || {};
+        applyAuthToUi();
+        showApplication();
+        renderCategories();
+        renderMasterOptions();
+        await loadHomeData();
+        openScreen('home');
+      } catch (error) {
+        showLogin(false);
+        setLoginStatus(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function enterApplication() {
+      setLoading(true, 'レシピ帳を準備しています。');
+      try {
+        const initial = await apiRequest('getRecipeInitialData');
+        state.auth = initial.auth;
+        state.isGuest = false;
+        state.masters = initial.masters || state.masters;
+        state.app = initial.app || {};
+        storeAuth(state.auth);
+        applyAuthToUi();
+        showApplication();
+        renderCategories();
+        renderMasterOptions();
+        await loadHomeData();
+        openScreen('home');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function loadHomeData() {
+      const home = await apiRequest('getRecipeHomeData');
+      state.home = home;
+      if (!state.auth) syncGuestCollections();
+      renderHomeCollections();
+      renderAdminSummary(home.admin_summary);
+    }
+
+    function renderHomeCollections() {
+      renderRecipeGrid('latest-recipe-grid', state.home.latest_recipes, 'まだ公開されたレシピがありません。');
+      renderRecipeGrid('recent-recipe-grid', state.home.recent_recipes, 'レシピを開くと、ここに最近見たレシピが表示されます。');
+      renderRecipeGrid('home-favorite-recipe-grid', state.home.favorite_recipes, 'ハートを押すと、よく使うレシピをここにまとめられます。');
+      renderRecipeGrid('favorite-recipe-grid', state.home.favorite_recipes, 'お気に入りにしたレシピがここに表示されます。');
+    }
+
+    async function handleHomeSearch(event) {
+      event.preventDefault();
+      $('recipe-keyword').value = $('home-search-input').value.trim();
+      openScreen('recipes');
+      await loadRecipeList();
+    }
+
+    async function handleRecipeFilter(event) {
+      event.preventDefault();
+      await loadRecipeList();
+    }
+
+    async function loadRecipeList(overrides = {}) {
+      setLoading(true, 'レシピを探しています。');
+      try {
+        const payload = {
+          keyword: overrides.keyword !== undefined ? overrides.keyword : $('recipe-keyword').value.trim(),
+          category_codes: overrides.categoryCode ? [overrides.categoryCode] : ($('recipe-category').value ? [$('recipe-category').value] : []),
+          recipe_class_codes: $('recipe-class').value ? [$('recipe-class').value] : [],
+          page: 1,
+          page_size: 100,
+          sort_key: 'updated_at',
+          sort_direction: 'desc'
+        };
+        if (overrides.categoryCode) $('recipe-category').value = overrides.categoryCode;
+        const result = await apiRequest('getRecipeList', payload);
+        state.recipeList = result.items || [];
+        if (!state.auth) syncGuestCollections();
+        $('recipe-result-line').textContent = `${result.pagination ? result.pagination.total : state.recipeList.length}件`;
+        renderRecipeGrid('recipe-list-grid', state.recipeList, '条件に合うレシピがありません。');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function renderCategories() {
+      const grid = $('category-grid');
+      const categories = state.masters.categories || [];
+      grid.innerHTML = categories.map((category) => `
+        <button class="category-card" type="button" data-category-code="${escapeHtml(category.category_code)}" style="--category-bg:${categoryColor(category.color_key)}">
+          <span class="category-icon" aria-hidden="true">${categoryIconSvg(category.icon_key, 31)}</span>
+          <span class="category-name">${escapeHtml(category.category_name)}</span>
+        </button>
+      `).join('');
+      grid.querySelectorAll('[data-category-code]').forEach((button) => button.addEventListener('click', async () => {
+        openScreen('recipes');
+        await loadRecipeList({ categoryCode: button.dataset.categoryCode });
+      }));
+    }
+
+    function renderMasterOptions() {
+      $('recipe-category').innerHTML = '<option value="">すべてのカテゴリ</option>' + (state.masters.categories || []).map((item) => `<option value="${escapeHtml(item.category_code)}">${escapeHtml(item.category_name)}</option>`).join('');
+      $('recipe-class').innerHTML = '<option value="">すべての区分</option>' + (state.masters.recipe_classes || []).map((item) => `<option value="${escapeHtml(item.recipe_class_code)}">${escapeHtml(item.recipe_class_name)}</option>`).join('');
+    }
+
+    function renderRecipeGrid(containerId, recipes, emptyText) {
+      const container = $(containerId);
+      const items = Array.isArray(recipes) ? recipes : [];
+      if (!items.length) {
+        container.innerHTML = emptyStateHtml(emptyText);
+        return;
+      }
+      container.innerHTML = items.map(recipeCardHtml).join('');
+      container.querySelectorAll('[data-recipe-id]').forEach((card) => card.addEventListener('click', (event) => {
+        if (event.target.closest('[data-favorite-id]')) return;
+        openRecipeDetail(card.dataset.recipeId);
+      }));
+      container.querySelectorAll('[data-favorite-id]').forEach((button) => button.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        await toggleFavorite(button.dataset.favoriteId, button.dataset.favoriteActive === 'true');
+      }));
+    }
+
+    function recipeCardHtml(recipe) {
+      const categoryIcon = categoryIconSvg(recipe.icon_key, 55);
+      const isFavorite = Boolean(recipe.is_favorite || (!state.auth && isLocalFavorite(recipe.recipe_id)));
+      const favoriteButton = `<button class="favorite-button ${isFavorite ? 'is-active' : ''}" type="button" data-favorite-id="${escapeHtml(recipe.recipe_id)}" data-favorite-active="${isFavorite ? 'true' : 'false'}" aria-label="お気に入り${isFavorite ? 'から外す' : 'に追加'}">${iconSvg('heart', 20, isFavorite ? 'is-filled' : '')}</button>`;
+      return `
+        <article class="recipe-card" data-recipe-id="${escapeHtml(recipe.recipe_id)}" tabindex="0" role="button" aria-label="${escapeHtml(recipe.recipe_name)}を開く">
+          <div class="recipe-cover" style="--cover-bg:${categoryColor(recipe.color_key)}"><span>${categoryIcon}</span></div>
+          ${favoriteButton}
+          <div class="recipe-card-body">
+            <div class="badge-row"><span class="badge">${escapeHtml(recipe.category_name || '未分類')}</span><span class="badge is-neutral">${escapeHtml(recipe.recipe_class_name || '')}</span></div>
+            <h3 class="recipe-name">${escapeHtml(recipe.recipe_name)}</h3>
+            <p class="recipe-summary">${escapeHtml(recipe.summary || 'レシピの詳細を確認できます。')}</p>
+            <div class="recipe-meta">Ver.${escapeHtml(String(recipe.version_no || ''))}${recipe.yield_text ? ` ・ ${escapeHtml(recipe.yield_text)}` : ''}${recipe.usage_location_text ? `<br>使用場所：${escapeHtml(recipe.usage_location_text)}` : ''}</div>
+          </div>
+        </article>
+      `;
+    }
+
+    async function openRecipeDetail(recipeId) {
+      state.previousScreen = state.currentScreen === 'detail' ? 'recipes' : state.currentScreen;
+      setLoading(true, 'レシピを開いています。');
+      try {
+        const detail = await apiRequest('getRecipeDetail', { recipe_id: recipeId });
+        state.currentDetail = detail;
+        if (!state.auth) {
+          detail.recipe.is_favorite = isLocalFavorite(recipeId);
+          saveLocalRecent(detail.recipe);
+        }
+        prependRecentInMemory(detail.recipe);
+        renderRecipeDetail(detail);
+        renderHomeCollections();
+        openScreen('detail');
+        if (state.auth) apiRequest('recordRecipeView', { recipe_id: recipeId }).catch(() => {});
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function renderRecipeDetail(detail) {
+      const recipe = detail.recipe || {};
+      const categoryIcon = categoryIconSvg(recipe.icon_key, 55);
+      const patterns = (detail.batch_patterns && detail.batch_patterns.length) ? detail.batch_patterns : [{ recipe_batch_pattern_id:'legacy', pattern_name:formatYield(recipe) || '基本仕込み', yield_quantity:recipe.yield_quantity, yield_unit_symbol:recipe.yield_unit_symbol, yield_note:recipe.yield_note, is_default:true, process_adjustment_note:'', ingredients:detail.ingredients || [] }];
+      const defaultPattern = patterns.find((item) => item.is_default) || patterns[0];
+      const stepsHtml = (detail.steps || []).map((step) => `
+        <article class="step-card"><div class="step-number">${escapeHtml(String(step.step_no))}</div><div>
+          <p class="step-instruction">${escapeHtml(step.instruction)}</p><div class="step-info">
+            ${step.equipment_name ? `<span class="step-chip">器具：${escapeHtml(step.equipment_name)}</span>` : ''}
+            ${step.temperature_value !== null ? `<span class="step-chip">温度：${escapeHtml(formatNumber(step.temperature_value))}${escapeHtml(step.temperature_unit_symbol)}</span>` : ''}
+            ${step.duration_value !== null ? `<span class="step-chip">時間：${escapeHtml(formatNumber(step.duration_value))}${escapeHtml(step.duration_unit_symbol)}</span>` : ''}
+          </div>${step.checkpoint ? `<div class="step-check">確認：${escapeHtml(step.checkpoint)}</div>` : ''}${step.caution ? `<div class="alert-text">注意：${escapeHtml(step.caution)}</div>` : ''}
+        </div></article>`).join('') || emptyStateHtml('工程はまだ登録されていません。');
+      const allergenText = formatAllergens(detail.allergens || [], recipe.allergen_check_status);
+      $('detail-container').innerHTML = `
+        <article class="detail-panel"><div class="detail-hero" style="--detail-bg:${categoryColor(recipe.color_key)}">
+          <button id="detail-back-button" class="ghost-button detail-back button-with-icon" type="button">${iconSvg('arrow-left',17)}<span>戻る</span></button>
+          <button id="detail-favorite-button" class="favorite-button detail-favorite ${recipe.is_favorite ? 'is-active' : ''}" type="button" data-favorite-active="${recipe.is_favorite ? 'true' : 'false'}">${iconSvg('heart',20,recipe.is_favorite ? 'is-filled' : '')}</button><span aria-hidden="true">${categoryIcon}</span>
+        </div><div class="detail-content">
+          <div class="badge-row"><span class="badge">${escapeHtml(recipe.category_name || '未分類')}</span><span class="badge is-neutral">${escapeHtml(recipe.recipe_class_name || '')}</span></div>
+          <h2 class="detail-title">${escapeHtml(recipe.recipe_name)}</h2>${recipe.summary ? `<p class="detail-summary">${escapeHtml(recipe.summary)}</p>` : ''}
+          <div class="detail-meta-grid"><div class="detail-meta"><div class="detail-meta-label">版</div><div class="detail-meta-value">Ver.${escapeHtml(String(recipe.version_no || ''))}</div></div><div class="detail-meta"><div class="detail-meta-label">仕込み量</div><div id="detail-yield-value" class="detail-meta-value"></div></div><div class="detail-meta"><div class="detail-meta-label">公開日</div><div class="detail-meta-value">${escapeHtml(formatDate(recipe.published_at) || '—')}</div></div></div>
+          <section class="detail-section"><h3 class="detail-section-title">使用場所</h3><div class="detail-text">${escapeHtml(recipe.usage_location_text || '未設定')}</div></section>
+          ${recipe.preparation ? detailTextSection('下準備',recipe.preparation) : ''}
+          <section class="detail-section"><h3 class="detail-section-title">仕込み量・材料</h3><div id="detail-pattern-tabs" class="detail-pattern-tabs"></div><div id="detail-pattern-content"></div></section>
+          <section class="detail-section"><h3 class="detail-section-title">作り方</h3><div class="step-list">${stepsHtml}</div></section>
+          ${recipe.quality_check ? detailTextSection('仕上がりの確認',recipe.quality_check) : ''}${recipe.caution ? `<section class="detail-section"><h3 class="detail-section-title">注意事項</h3><div class="alert-text">${escapeHtml(recipe.caution)}</div></section>` : ''}
+          ${recipe.storage_method || recipe.shelf_life_note ? `<section class="detail-section"><h3 class="detail-section-title">保存方法</h3><div class="detail-text">${escapeHtml([recipe.storage_method,recipe.shelf_life_note].filter(Boolean).join('\n'))}</div></section>` : ''}
+          <section class="detail-section"><h3 class="detail-section-title">アレルゲン</h3><div class="detail-text">${escapeHtml(allergenText)}</div></section>
+        </div></article>`;
+      const renderPattern = (pattern) => {
+        document.querySelectorAll('.detail-pattern-tab').forEach((button) => button.classList.toggle('is-active', button.dataset.patternId === pattern.recipe_batch_pattern_id));
+        $('detail-yield-value').textContent = formatBatchPatternYield(pattern) || pattern.pattern_name || '未設定';
+        const groups = groupBy(pattern.ingredients || [], (item) => item.ingredient_group_name || '材料');
+        const ingredientsHtml = Object.entries(groups).map(([groupName,items]) => `<div class="ingredient-group"><div class="ingredient-group-title">${escapeHtml(groupName)}</div>${items.map((item) => `<div class="ingredient-row"><div><div class="ingredient-name">${escapeHtml(item.ingredient_name)}</div>${item.preparation_note ? `<div class="ingredient-note">${escapeHtml(item.preparation_note)}</div>` : ''}</div><div class="ingredient-quantity">${escapeHtml(formatIngredientQuantity(item))}</div></div>`).join('')}</div>`).join('') || emptyStateHtml('材料はまだ登録されていません。');
+        $('detail-pattern-content').innerHTML = `${pattern.process_adjustment_note ? `<div class="pattern-adjustment-note">${escapeHtml(pattern.process_adjustment_note)}</div>` : ''}${ingredientsHtml}`;
+      };
+      $('detail-pattern-tabs').innerHTML = patterns.map((pattern) => `<button class="detail-pattern-tab" type="button" data-pattern-id="${escapeHtml(pattern.recipe_batch_pattern_id)}">${escapeHtml(pattern.pattern_name || '仕込み量')}</button>`).join('');
+      $('detail-pattern-tabs').querySelectorAll('[data-pattern-id]').forEach((button) => button.addEventListener('click', () => renderPattern(patterns.find((item) => item.recipe_batch_pattern_id === button.dataset.patternId) || defaultPattern)));
+      renderPattern(defaultPattern);
+      $('detail-back-button').addEventListener('click', () => openScreen(state.previousScreen || 'recipes'));
+      if ($('detail-favorite-button')) $('detail-favorite-button').addEventListener('click', async () => { await toggleFavorite(recipe.recipe_id, $('detail-favorite-button').dataset.favoriteActive === 'true'); });
+    }
+
+    function detailTextSection(title, text) {
+      return `<section class="detail-section"><h3 class="detail-section-title">${escapeHtml(title)}</h3><div class="detail-text">${escapeHtml(text)}</div></section>`;
+    }
+
+    function formatBatchPatternYield(pattern) {
+      if (!pattern) return '';
+      if (pattern.yield_quantity !== null && pattern.yield_quantity !== undefined && pattern.yield_quantity !== '') return `${formatNumber(pattern.yield_quantity)}${pattern.yield_unit_symbol || ''}`;
+      return pattern.yield_note || '';
+    }
+
+    async function toggleFavorite(recipeId, isActive) {
+      if (state.isPreview) { showToast('プレビューでは保存しません。'); return; }
+      if (!state.auth) {
+        const recipe = findRecipeSnapshot(recipeId);
+        if (!recipe) { showToast('レシピ情報を取得できませんでした。', 'error'); return; }
+        setLocalFavorite(recipe, !isActive);
+        updateFavoriteState(recipeId, !isActive);
+        syncGuestCollections();
+        renderHomeCollections();
+        if (state.currentScreen === 'recipes') renderRecipeGrid('recipe-list-grid', state.recipeList, '条件に合うレシピがありません。');
+        if (state.currentScreen === 'detail' && state.currentDetail) renderRecipeDetail(state.currentDetail);
+        showToast(!isActive ? 'この端末のお気に入りに追加しました。' : 'この端末のお気に入りから外しました。', 'ok');
+        return;
+      }
+      try {
+        await apiRequest(isActive ? 'removeRecipeFavorite' : 'saveRecipeFavorite', { recipe_id: recipeId });
+        updateFavoriteState(recipeId, !isActive);
+        await loadHomeData();
+        if (state.currentScreen === 'recipes') await loadRecipeList();
+        if (state.currentScreen === 'detail' && state.currentDetail) {
+          state.currentDetail.recipe.is_favorite = !isActive;
+          renderRecipeDetail(state.currentDetail);
+        }
+        showToast(!isActive ? 'お気に入りに追加しました。' : 'お気に入りから外しました。', 'ok');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    function updateFavoriteState(recipeId, value) {
+      const collections = [state.recipeList, state.home.latest_recipes, state.home.recent_recipes, state.home.favorite_recipes];
+      collections.forEach((items) => (items || []).forEach((item) => { if (item.recipe_id === recipeId) item.is_favorite = value; }));
+      if (state.currentDetail && state.currentDetail.recipe && state.currentDetail.recipe.recipe_id === recipeId) {
+        state.currentDetail.recipe.is_favorite = value;
+      }
+    }
+
+    function openScreen(screenName) {
+      if (state.currentScreen === 'contributors' && screenName !== 'contributors' && Object.keys(state.contributorChanges || {}).length) {
+        const discard = window.confirm('投稿者設定に未保存の変更があります。変更を破棄して移動しますか？');
+        if (!discard) return;
+        state.contributorChanges = {};
+        updateContributorSaveUi();
+      }
+      if (screenName === 'admin' && !(state.auth && state.auth.capabilities && state.auth.capabilities.can_manage)) return;
+      if (screenName === 'contributors' && !(state.auth && state.auth.capabilities && state.auth.capabilities.can_manage_contributors)) return;
+      if (screenName === 'create-recipe' && !(state.auth && state.auth.capabilities && state.auth.capabilities.can_create)) return;
+      if (screenName === 'edit-recipe' && !(state.auth && state.auth.capabilities && state.auth.capabilities.can_create)) return;
+      document.querySelectorAll('.screen').forEach((screen) => screen.classList.toggle('is-active', screen.dataset.screen === screenName));
+      document.querySelectorAll('[data-nav-screen]').forEach((button) => button.classList.toggle('is-active', button.dataset.navScreen === screenName));
+      state.currentScreen = screenName;
+      if (screenName === 'recipes' && !state.recipeList.length && !state.isPreview) loadRecipeList().catch(handleError);
+      if (screenName === 'admin' && !state.isPreview) loadAdminData();
+      if (screenName === 'contributors' && !state.isPreview) loadContributorData(false);
+      if (screenName === 'favorites') renderRecipeGrid('favorite-recipe-grid', state.home.favorite_recipes, 'お気に入りにしたレシピがここに表示されます。');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function applyAuthToUi() {
+      const isAuthenticated = Boolean(state.auth && state.auth.is_authenticated !== false);
+      $('user-name').textContent = isAuthenticated
+        ? (state.auth.account_name || state.auth.employee_display_name || state.auth.login_id || '-')
+        : '閲覧モード';
+      $('user-role').textContent = isAuthenticated
+        ? (ROLE_LABELS[state.auth.primary_role] || state.auth.primary_role || '閲覧者')
+        : 'ログイン不要';
+      const canCreate = Boolean(isAuthenticated && state.auth.capabilities && state.auth.capabilities.can_create);
+      const canManage = Boolean(isAuthenticated && state.auth.capabilities && state.auth.capabilities.can_manage);
+      const canManageContributors = Boolean(isAuthenticated && state.auth.capabilities && state.auth.capabilities.can_manage_contributors);
+      $('hero-new-recipe').hidden = !canCreate;
+      $('admin-new-recipe').disabled = !canCreate;
+      $('admin-nav-button').hidden = !canManage;
+      $('admin-open-contributors').hidden = !canManageContributors;
+      $('favorites-nav-button').hidden = false;
+      $('recent-section').hidden = false;
+      $('home-favorite-section').hidden = false;
+      $('clear-recent-button').hidden = isAuthenticated;
+      $('management-login-button').hidden = isAuthenticated;
+      $('logout-button').hidden = !isAuthenticated;
+      const navCount = canManage ? 4 : 3;
+      $('bottom-nav-inner').style.gridTemplateColumns = `repeat(${navCount}, 1fr)`;
+    }
+
+    function openCreateRecipeScreen() {
+      if (!(state.auth && state.auth.capabilities && state.auth.capabilities.can_create)) return;
+      populateCreateRecipeForm();
+      $('create-recipe-result').innerHTML = '';
+      openScreen('create-recipe');
+    }
+
+    function populateCreateRecipeForm() {
+      $('create-category').innerHTML = '<option value="">選択してください</option>' + (state.masters.categories || []).map((item) => `<option value="${escapeHtml(item.category_code)}">${escapeHtml(item.category_name)}</option>`).join('');
+      $('create-recipe-class').innerHTML = '<option value="">選択してください</option>' + (state.masters.recipe_classes || []).map((item) => `<option value="${escapeHtml(item.recipe_class_code)}">${escapeHtml(item.recipe_class_name)}</option>`).join('');
+      hydrateIcons($('screen-create-recipe'));
+    }
+
+    function isSelectableRecipeWorkplace(item) {
+      const code = String((item && item.code) || '').trim();
+      return code && !(APP_CONFIG.excludedWorkplaceCodes || []).includes(code);
+    }
+
+    
+
+    
+
+    async function handleCreateRecipe(event) {
+      event.preventDefault();
+      if (!(state.auth && state.auth.capabilities && state.auth.capabilities.can_create)) return;
+      const payload = {
+        recipe_name: $('create-recipe-name').value.trim(),
+        category_code: $('create-category').value,
+        recipe_class_code: $('create-recipe-class').value,
+        summary: $('create-summary').value.trim()
+      };
+      setLoading(true, '下書きを作成しています。');
+      try {
+        const result = await apiRequest('createRecipeDraft', payload);
+        $('create-recipe-form').reset();
+        $('create-recipe-result').innerHTML = `<div class="notice-box">${escapeHtml(result.recipe_name || payload.recipe_name)} のVer.1下書きを作成しました。<br>${escapeHtml(result.recipe_id)} / ${escapeHtml(result.recipe_version_id)}</div>`;
+        await loadHomeData();
+        await loadAdminData();
+        showToast('Ver.1の下書きを作成しました。', 'ok');
+        await openDraftEditor(result.recipe_version_id);
+      } catch (error) {
+        $('create-recipe-result').innerHTML = `<div class="alert-text">${escapeHtml(error.message)}</div>`;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function loadAdminData() {
+      if (!(state.auth && state.auth.capabilities && state.auth.capabilities.can_manage)) return;
+      renderAdminRecipeLoading();
+      try {
+        const data = await apiRequest('getRecipeAdminData');
+        state.adminItems = data.items || [];
+        renderAdminSummary(data.summary || state.home.admin_summary);
+        renderAdminRecipeList();
+      } catch (error) {
+        state.adminItems = [];
+        renderAdminRecipeLoadError(error);
+      }
+    }
+
+    function renderAdminRecipeLoading() {
+      $('admin-recipe-list').innerHTML = '<div class="empty-state"><div class="spinner" aria-hidden="true"></div><h3 class="empty-title">レシピ一覧を読み込んでいます</h3><p class="empty-text">GASから管理用の一覧を取得しています。</p></div>';
+    }
+
+    function renderAdminRecipeLoadError(error) {
+      const message = error && error.message ? error.message : '接続エラー';
+      $('admin-recipe-list').innerHTML = `<div class="empty-state"><span class="empty-icon">${iconSvg('refresh-cw', 40)}</span><h3 class="empty-title">レシピ一覧を取得できませんでした</h3><p class="empty-text">${escapeHtml(message)}</p><button class="secondary-button button-with-icon" type="button" data-retry-admin-list>${iconSvg('refresh-cw', 17)}<span>再読み込み</span></button></div>`;
+      const retryButton = $('admin-recipe-list').querySelector('[data-retry-admin-list]');
+      if (retryButton) retryButton.addEventListener('click', loadAdminData);
+    }
+
+    function renderAdminRecipeList() {
+      const container = $('admin-recipe-list');
+      if (!state.adminItems.length) {
+        container.innerHTML = '<div class="empty-state"><span class="empty-icon">' + iconSvg('book-open', 40) + '</span><h3 class="empty-title">登録済みのレシピはありません</h3><p class="empty-text">「新しいレシピ」から最初の下書きを作成してください。</p></div>';
+        return;
+      }
+      const statusLabels = { draft:'下書き', review_pending:'下書き', returned:'下書き', published:'公開中', superseded:'過去版', discontinued:'廃止' };
+      container.innerHTML = state.adminItems.map((item) => {
+        const displayStatus = item.display_status || item.version_status;
+        const statusClass = displayStatus === 'draft' ? 'is-draft' : displayStatus === 'published' ? 'is-published' : '';
+        const audit = [
+          item.created_by_account_id ? `作成 ${item.created_by_account_id}` : '',
+          item.updated_by_account_id ? `更新 ${item.updated_by_account_id}` : '',
+          item.published_by_account_id ? `公開 ${item.published_by_account_id}` : ''
+        ].filter(Boolean).join(' / ');
+        return `
+        <article class="admin-recipe-row">
+          <div>
+            <h3 class="admin-recipe-name">${escapeHtml(item.recipe_name || '名称未設定')}</h3>
+            <div class="admin-recipe-meta">${escapeHtml(item.category_name || '未分類')} ・ ${escapeHtml(item.recipe_class_name || '')} ・ Ver.${escapeHtml(String(item.version_no || ''))}<br>${escapeHtml(item.recipe_id)} / 更新 ${escapeHtml(formatDateTime(item.updated_at) || '—')}${audit ? `<br>${escapeHtml(audit)}` : ''}</div>
+          </div>
+          <div class="admin-row-actions">
+            <span class="status-pill ${statusClass}">${escapeHtml(statusLabels[item.version_status] || item.version_status)}</span>
+            ${item.can_edit ? `<button class="small-button button-with-icon" type="button" data-edit-version-id="${escapeHtml(item.recipe_version_id)}">${iconSvg('pencil', 15)}<span>編集・公開</span></button>` : ''}
+            ${item.can_create_new_version ? `<button class="small-button button-with-icon" type="button" data-new-version-recipe-id="${escapeHtml(item.recipe_id)}">${iconSvg('copy', 15)}<span>新版作成</span></button>` : ''}
+          </div>
+        </article>`;
+      }).join('');
+      container.querySelectorAll('[data-edit-version-id]').forEach((button) => button.addEventListener('click', () => openDraftEditor(button.dataset.editVersionId)));
+      container.querySelectorAll('[data-new-version-recipe-id]').forEach((button) => button.addEventListener('click', () => handleCreateNewVersion(button.dataset.newVersionRecipeId)));
+    }
+
+    async function loadContributorData(forceRefresh = false) {
+      if (!(state.auth && state.auth.capabilities && state.auth.capabilities.can_manage_contributors)) return;
+      if (state.contributorSaving) return;
+      state.contributorChanges = {};
+      updateContributorSaveUi();
+      $('contributor-connection-status').textContent = forceRefresh ? '社員マスタの最新情報を読み込んでいます。' : '社員マスタを読み込んでいます。';
+      $('contributor-list').innerHTML = '<div class="empty-state"><div class="spinner" aria-hidden="true"></div><h3 class="empty-title">社員情報を読み込んでいます</h3><p class="empty-text">この画面でのみ社員マスタへ接続します。</p></div>';
+      try {
+        const data = await apiRequest('getRecipeContributorAdminData', { force_refresh:forceRefresh });
+        state.contributors = (data.items || []).map((item) => ({ ...item, saved_is_contributor:Boolean(item.is_contributor) }));
+        const summary = data.summary || {};
+        $('contributor-connection-status').textContent = data.employee_database_connected
+          ? `社員マスタ接続済み：有効社員 ${summary.active_employee_count || 0}名 / ログインアカウントあり ${summary.login_account_count || 0}名 / 投稿可能者 ${summary.contributor_count || 0}名 / アカウント未登録 ${summary.account_missing_count || 0}名${data.cached ? '（一時保存データ）' : ''}`
+          : '社員マスタの接続状態を確認できません。';
+        renderContributorList();
+        hydrateIcons($('screen-contributors'));
+      } catch (error) {
+        renderContributorLoadError(error);
+      }
+    }
+
+    function renderContributorLoadError(error) {
+      state.contributors = [];
+      state.contributorChanges = {};
+      updateContributorSaveUi();
+      $('contributor-connection-status').textContent = `社員マスタに接続できません: ${error && error.message ? error.message : '接続エラー'}`;
+      $('contributor-list').innerHTML = '<div class="empty-state"><h3 class="empty-title">社員マスタを読み込めません</h3><p class="empty-text">スクリプトプロパティ、スプレッドシート権限、GASの実行状況を確認してください。レシピ管理画面は引き続き利用できます。</p><button class="secondary-button button-with-icon" type="button" data-retry-contributor-list>' + iconSvg('refresh-cw', 17) + '<span>再読み込み</span></button></div>';
+      const retryButton = $('contributor-list').querySelector('[data-retry-contributor-list]');
+      if (retryButton) retryButton.addEventListener('click', () => loadContributorData(true));
+    }
+
+    function getContributorDesiredState(item) {
+      if (!item || !item.account_id) return Boolean(item && item.saved_is_contributor);
+      if (Object.prototype.hasOwnProperty.call(state.contributorChanges, item.account_id)) {
+        return Boolean(state.contributorChanges[item.account_id]);
+      }
+      return Boolean(item.saved_is_contributor);
+    }
+
+    function updateContributorSaveUi() {
+      const count = Object.keys(state.contributorChanges || {}).length;
+      const button = $('contributor-save');
+      const reloadButton = $('contributor-reload');
+      const status = $('contributor-save-status');
+      if (!button || !status) return;
+      button.disabled = state.contributorSaving || count === 0;
+      if (reloadButton) reloadButton.disabled = state.contributorSaving || count > 0;
+      button.querySelector('span:last-child').textContent = state.contributorSaving ? '保存しています…' : `変更を保存（${count}件）`;
+      status.textContent = state.contributorSaving
+        ? '選択した変更を順番に保存しています。画面を閉じずにお待ちください。'
+        : count > 0
+          ? `${count}名分の変更が未保存です。内容を確認して「変更を保存」を押してください。`
+          : 'チェックを変更してから、まとめて保存してください。';
+    }
+
+    function renderContributorList() {
+      const container = $('contributor-list');
+      const filter = state.contributorFilter || '';
+      const items = (state.contributors || []).filter((item) => {
+        if (!filter) return true;
+        const haystack = [item.employee_no, item.display_name, item.department_name, item.workplace_name, item.login_id].join(' ').toLowerCase();
+        return haystack.includes(filter);
+      });
+      if (!items.length) {
+        container.innerHTML = '<div class="empty-state"><h3 class="empty-title">該当する社員がいません</h3><p class="empty-text">検索条件を変更してください。</p></div>';
+        updateContributorSaveUi();
+        return;
+      }
+      container.innerHTML = items.map((item) => {
+        const accountText = item.has_login_account
+          ? `${item.account_id || ''} / ${item.login_id || ''}`
+          : '社員マスタにログインアカウントがありません';
+        const desiredEnabled = getContributorDesiredState(item);
+        const isPending = Boolean(item.account_id && Object.prototype.hasOwnProperty.call(state.contributorChanges, item.account_id));
+        const toggleText = isPending
+          ? (desiredEnabled ? '登録予定' : '解除予定')
+          : (item.status_label || (desiredEnabled ? '投稿可能' : '未登録'));
+        return `
+        <div class="contributor-row${isPending ? ' is-pending' : ''}">
+          <div>
+            <div class="contributor-name">${escapeHtml(item.display_name || item.login_id || item.employee_id)}</div>
+            <div class="contributor-meta">${escapeHtml([item.employee_no, item.department_name, item.workplace_name].filter(Boolean).join(' ・ '))}<br>${escapeHtml(accountText)}</div>
+          </div>
+          <label class="contributor-toggle">
+            <input type="checkbox" data-contributor-account-id="${escapeHtml(item.account_id || '')}" ${desiredEnabled ? 'checked' : ''} ${item.toggle_disabled || state.contributorSaving ? 'disabled' : ''}>
+            <span>${escapeHtml(toggleText)}</span>
+          </label>
+        </div>`;
+      }).join('');
+      container.querySelectorAll('[data-contributor-account-id]').forEach((checkbox) => checkbox.addEventListener('change', () => {
+        const accountId = checkbox.dataset.contributorAccountId;
+        if (!accountId) return;
+        const target = state.contributors.find((item) => item.account_id === accountId);
+        if (!target) return;
+        const desiredEnabled = checkbox.checked;
+        if (desiredEnabled === Boolean(target.saved_is_contributor)) {
+          delete state.contributorChanges[accountId];
+        } else {
+          state.contributorChanges[accountId] = desiredEnabled;
+        }
+        renderContributorList();
+      }));
+      updateContributorSaveUi();
+    }
+
+    async function handleSaveContributorChanges() {
+      if (state.contributorSaving) return;
+      const changes = Object.entries(state.contributorChanges || {});
+      if (!changes.length) return;
+      state.contributorSaving = true;
+      updateContributorSaveUi();
+      renderContributorList();
+      let successCount = 0;
+      const failedChanges = {};
+      const failures = [];
+      for (let index = 0; index < changes.length; index += 1) {
+        const [accountId, enabled] = changes[index];
+        $('contributor-save-status').textContent = `${changes.length}件中 ${index + 1}件目を保存しています。`;
+        try {
+          await apiRequest('saveRecipeContributor', { account_id:accountId, enabled:Boolean(enabled) });
+          successCount += 1;
+        } catch (error) {
+          failedChanges[accountId] = Boolean(enabled);
+          failures.push(`${accountId}: ${error && error.message ? error.message : '更新失敗'}`);
+        }
+      }
+      state.contributorSaving = false;
+      await loadContributorData(true);
+      if (Object.keys(failedChanges).length) {
+        state.contributorChanges = failedChanges;
+        renderContributorList();
+        $('contributor-save-status').textContent = `${successCount}件を保存し、${failures.length}件は失敗しました。失敗した変更は選択状態を残しています。`;
+        showToast(`${failures.length}件を更新できませんでした。`, 'error');
+      } else {
+        showToast(`${successCount}名分の投稿者設定を更新しました。`, 'ok');
+      }
+    }
+
+    async function handleCreateNewVersion(recipeId) {
+      const item = (state.adminItems || []).find((row) => row.recipe_id === recipeId && row.can_create_new_version);
+      if (!item) return;
+      if (!window.confirm(`${item.recipe_name || 'このレシピ'}の公開版を複製し、新しい下書きを作成しますか？`)) return;
+      setLoading(true, '新版の下書きを作成しています。');
+      try {
+        const result = await apiRequest('createRecipeNewVersion', {
+          recipe_id:recipeId,
+          expected_recipe_updated_at:item.recipe_updated_at
+        });
+        await loadAdminData();
+        showToast(`Ver.${result.version_no || ''}の下書きを作成しました。`, 'ok');
+        await openDraftEditor(result.recipe_version_id);
+      } catch (error) {
+        showToast(error.message || '新版を作成できませんでした。', 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+
+    async function openDraftEditor(recipeVersionId) {
+      if (!(state.auth && state.auth.capabilities && state.auth.capabilities.can_create)) return;
+      setLoading(true, '下書きを読み込んでいます。');
+      try {
+        const data = await apiRequest('getRecipeDraftEditorData', { recipe_version_id: recipeVersionId });
+        state.draftEditor = data;
+        renderDraftEditor(data);
+        openScreen('edit-recipe');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function renderDraftEditor(data) {
+      const version = data.version || {};
+      const recipe = data.recipe || {};
+      $('edit-recipe-heading').innerHTML = `<div class="editor-status-line"><span class="status-pill is-draft">下書き</span><span class="badge">${escapeHtml(recipe.recipe_class_name || '')}</span></div><h3 class="admin-recipe-name">${escapeHtml(version.recipe_name || '名称未設定')}　Ver.${escapeHtml(String(version.version_no || 1))}</h3><div class="admin-recipe-meta">${escapeHtml(recipe.recipe_id || '')} / ${escapeHtml(version.recipe_version_id || '')}</div>`;
+      $('edit-recipe-name').value = version.recipe_name || '';
+      $('edit-category').innerHTML = (state.masters.categories || []).map((item) => `<option value="${escapeHtml(item.category_code)}" ${item.category_code === version.category_code ? 'selected' : ''}>${escapeHtml(item.category_name)}</option>`).join('');
+      $('edit-recipe-class').innerHTML = (state.masters.recipe_classes || []).map((item) => `<option value="${escapeHtml(item.recipe_class_code)}" ${item.recipe_class_code === recipe.recipe_class_code ? 'selected' : ''}>${escapeHtml(item.recipe_class_name)}</option>`).join('');
+      $('edit-recipe-class').disabled = false;
+      $('edit-summary').value = version.summary || ''; $('edit-preparation').value = version.preparation || ''; $('edit-quality-check').value = version.quality_check || ''; $('edit-caution').value = version.caution || ''; $('edit-storage-method').value = version.storage_method || ''; $('edit-shelf-life-note').value = version.shelf_life_note || '';
+      const sourcePatterns = (data.batch_patterns && data.batch_patterns.length) ? data.batch_patterns : [{ recipe_batch_pattern_id:'local-default', pattern_name:'基本仕込み', multiplier_value:1, yield_quantity:'', yield_unit_code:'', yield_note:'', is_default:true, process_adjustment_note:'', sort_order:1 }];
+      const allIngredients = data.ingredients || [];
+      state.batchPatternEditor = { patterns: sourcePatterns.map((pattern,index) => { const key=pattern.recipe_batch_pattern_id || createLocalPatternKey(); return { client_key:key, pattern_name:pattern.pattern_name || `仕込み量 ${index+1}`, multiplier_value:pattern.multiplier_value || 1, yield_quantity:pattern.yield_quantity ?? '', yield_unit_code:pattern.yield_unit_code || '', yield_note:pattern.yield_note || '', is_default:Boolean(pattern.is_default), process_adjustment_note:pattern.process_adjustment_note || '', sort_order:index+1, ingredients:allIngredients.filter((item) => item.recipe_batch_pattern_id === pattern.recipe_batch_pattern_id).map((item) => ({...item})) }; }), activeKey:'' };
+      if (!state.batchPatternEditor.patterns.some((item) => item.is_default)) state.batchPatternEditor.patterns[0].is_default = true;
+      $('step-editor-list').innerHTML = ''; (data.steps || []).forEach(addStepEditorRow); if (!(data.steps || []).length) addStepEditorRow({});
+      renderBatchPatternTabs(); activateBatchPattern((state.batchPatternEditor.patterns.find((item) => item.is_default) || state.batchPatternEditor.patterns[0]).client_key, false);
+      renderScopeEditor(data.scopes || []);
+      renderAllergenEditor(version.allergen_check_status || 'unconfirmed', data.allergens || []);
+      $('edit-recipe-result').innerHTML = ''; hydrateIcons($('screen-edit-recipe')); renumberEditorRows();
+    }
+
+    function createLocalPatternKey() { return `local-${Date.now()}-${Math.random().toString(36).slice(2,9)}`; }
+
+    function renderBatchPatternTabs() {
+      const editor = state.batchPatternEditor;
+      $('batch-pattern-tabs').innerHTML = editor.patterns.map((pattern) => `<button class="batch-pattern-tab ${pattern.client_key === editor.activeKey ? 'is-active' : ''}" type="button" data-batch-key="${escapeHtml(pattern.client_key)}">${escapeHtml(pattern.pattern_name || '仕込み量')}${pattern.is_default ? '<span class="batch-tab-badge">基準</span>' : ''}</button>`).join('');
+      $('batch-pattern-tabs').querySelectorAll('[data-batch-key]').forEach((button) => button.addEventListener('click', () => activateBatchPattern(button.dataset.batchKey, true)));
+    }
+
+    function saveActiveBatchPatternForm() {
+      const editor=state.batchPatternEditor; if (!editor.activeKey) return;
+      const pattern=editor.patterns.find((item) => item.client_key === editor.activeKey); if (!pattern) return;
+      pattern.pattern_name=$('edit-pattern-name').value.trim(); pattern.multiplier_value=$('edit-pattern-multiplier').value.trim(); pattern.yield_quantity=$('edit-pattern-yield-quantity').value.trim(); pattern.yield_unit_code=$('edit-pattern-yield-unit').value; pattern.yield_note=$('edit-pattern-yield-note').value.trim(); pattern.process_adjustment_note=$('edit-pattern-adjustment-note').value.trim(); pattern.ingredients=collectIngredientRows(pattern.client_key);
+    }
+
+    function activateBatchPattern(key, saveCurrent = true) {
+      if (saveCurrent) saveActiveBatchPatternForm();
+      const editor=state.batchPatternEditor; const pattern=editor.patterns.find((item) => item.client_key === key); if (!pattern) return;
+      editor.activeKey=key; renderBatchPatternTabs();
+      $('edit-pattern-name').value=pattern.pattern_name || ''; $('edit-pattern-multiplier').value=pattern.multiplier_value ?? 1; $('edit-pattern-yield-quantity').value=pattern.yield_quantity ?? ''; $('edit-pattern-yield-unit').innerHTML=unitOptionsHtml(pattern.yield_unit_code || '', ['weight','volume','count','other'], true); $('edit-pattern-yield-note').value=pattern.yield_note || ''; $('edit-pattern-adjustment-note').value=pattern.process_adjustment_note || '';
+      $('batch-default-status').textContent=pattern.is_default ? '基準' : '追加の仕込み量'; $('batch-default-status').classList.toggle('is-default', pattern.is_default); $('set-default-pattern-button').disabled=pattern.is_default; $('delete-batch-pattern-button').disabled=editor.patterns.length <= 1;
+      $('ingredient-editor-list').innerHTML=''; (pattern.ingredients || []).forEach(addIngredientEditorRow); if (!(pattern.ingredients || []).length) addIngredientEditorRow({}); renumberEditorRows();
+    }
+
+    function addBatchPattern() {
+      saveActiveBatchPatternForm(); const key=createLocalPatternKey(); const count=state.batchPatternEditor.patterns.length+1;
+      state.batchPatternEditor.patterns.push({client_key:key,pattern_name:`仕込み量 ${count}`,multiplier_value:1,yield_quantity:'',yield_unit_code:'',yield_note:'',is_default:false,process_adjustment_note:'',sort_order:count,ingredients:[]}); activateBatchPattern(key,false);
+    }
+
+    function copyActiveBatchPattern() {
+      saveActiveBatchPatternForm(); const source=state.batchPatternEditor.patterns.find((item) => item.client_key === state.batchPatternEditor.activeKey); if (!source) return;
+      const raw=window.prompt('基準の仕込み量に対する倍率を入力してください。', '1.5'); if (raw === null) return; const factor=Number(raw); if (!Number.isFinite(factor) || factor <= 0) { showToast('倍率は0より大きい数値で入力してください。','error'); return; }
+      const key=createLocalPatternKey(); const copiedIngredients=(source.ingredients || []).map((item) => { const quantity=Number(item.quantity); const canMultiply=item.scaling_method === 'proportional' && Number.isFinite(quantity) && item.quantity !== ''; return {...item, quantity:canMultiply ? Number((quantity*factor).toFixed(3)) : item.quantity}; });
+      state.batchPatternEditor.patterns.push({client_key:key,pattern_name:`${source.pattern_name || '仕込み量'} ${factor}倍`,multiplier_value:factor,yield_quantity:(source.yield_quantity !== '' && Number.isFinite(Number(source.yield_quantity))) ? Number((Number(source.yield_quantity)*factor).toFixed(3)) : source.yield_quantity,yield_unit_code:source.yield_unit_code,yield_note:'',is_default:false,process_adjustment_note:'',sort_order:state.batchPatternEditor.patterns.length+1,ingredients:copiedIngredients}); activateBatchPattern(key,false);
+    }
+
+    function setActiveBatchPatternAsDefault() {
+      saveActiveBatchPatternForm(); state.batchPatternEditor.patterns.forEach((item) => { item.is_default=item.client_key === state.batchPatternEditor.activeKey; }); activateBatchPattern(state.batchPatternEditor.activeKey,false);
+    }
+
+    function deleteActiveBatchPattern() {
+      const editor=state.batchPatternEditor; if (editor.patterns.length <= 1) return; const active=editor.patterns.find((item) => item.client_key === editor.activeKey); if (!window.confirm(`${active ? active.pattern_name : 'この仕込み量'}を削除しますか？`)) return;
+      const index=editor.patterns.findIndex((item) => item.client_key === editor.activeKey); const wasDefault=active && active.is_default; editor.patterns.splice(index,1); if (wasDefault) editor.patterns[0].is_default=true; editor.patterns.forEach((item,i) => item.sort_order=i+1); activateBatchPattern(editor.patterns[Math.max(0,index-1)].client_key,false);
+    }
+
+    function unitOptionsHtml(selectedCode, allowedTypes, includeBlank = true) {
+      const types = Array.isArray(allowedTypes) ? allowedTypes : [];
+      const units = (state.masters.units || []).filter((unit) => !types.length || types.includes(unit.unit_type));
+      return (includeBlank ? '<option value="">選択しない</option>' : '') + units.map((unit) => `<option value="${escapeHtml(unit.unit_code)}" ${unit.unit_code === selectedCode ? 'selected' : ''}>${escapeHtml(unit.unit_name)}（${escapeHtml(unit.unit_symbol || unit.unit_code)}）</option>`).join('');
+    }
+
+    function addIngredientEditorRow(item = {}) {
+      const container = $('ingredient-editor-list');
+      const card = document.createElement('div');
+      card.className = 'repeat-card';
+      card.dataset.ingredientRow = '1';
+      card.innerHTML = `
+        <div class="repeat-card-head"><div class="repeat-card-title">材料</div><button class="small-button is-danger" type="button" data-remove-row>削除</button></div>
+        <div class="repeat-grid">
+          <label class="field"><span class="field-label">グループ</span><input class="field-input" data-field="ingredient_group_name" maxlength="100" value="${escapeHtml(item.ingredient_group_name || '')}" placeholder="例：生地"></label>
+          <label class="field is-wide"><span class="field-label">材料名 *</span><input class="field-input" data-field="ingredient_name" maxlength="200" value="${escapeHtml(item.ingredient_name || '')}" placeholder="例：新生姜"></label>
+          <label class="field"><span class="field-label">数量</span><input class="field-input" data-field="quantity" type="number" min="0" step="0.001" value="${item.quantity === null || item.quantity === '' || item.quantity === undefined ? '' : escapeHtml(item.quantity)}"></label>
+          <label class="field"><span class="field-label">単位</span><select class="field-input" data-field="unit_code">${unitOptionsHtml(item.unit_code || '', ['weight','volume','count','other'], true)}</select></label>
+          <label class="field"><span class="field-label">数量の補足</span><input class="field-input" data-field="quantity_note" maxlength="100" value="${escapeHtml(item.quantity_note || '')}" placeholder="例：適量"></label>
+          <label class="field is-wide"><span class="field-label">下処理・補足</span><input class="field-input" data-field="preparation_note" maxlength="500" value="${escapeHtml(item.preparation_note || '')}" placeholder="例：1～2mmに刻む"></label>
+          <label class="field"><span class="field-label">倍率換算</span><select class="field-input" data-field="scaling_method"><option value="proportional" ${(item.scaling_method || 'proportional') === 'proportional' ? 'selected' : ''}>比例</option><option value="fixed" ${item.scaling_method === 'fixed' ? 'selected' : ''}>固定</option><option value="manual" ${item.scaling_method === 'manual' ? 'selected' : ''}>要手動調整</option></select></label>
+        </div>`;
+      card.querySelector('[data-remove-row]').addEventListener('click', () => { card.remove(); renumberEditorRows(); });
+      container.appendChild(card);
+      renumberEditorRows();
+    }
+
+    function addStepEditorRow(item = {}) {
+      const container = $('step-editor-list');
+      const card = document.createElement('div');
+      card.className = 'repeat-card';
+      card.dataset.stepRow = '1';
+      card.innerHTML = `
+        <div class="repeat-card-head"><div class="repeat-card-title">工程</div><button class="small-button is-danger" type="button" data-remove-row>削除</button></div>
+        <div class="repeat-grid">
+          <label class="field is-full"><span class="field-label">手順 *</span><textarea class="field-input field-textarea" data-field="instruction" maxlength="3000" placeholder="作業内容を入力します。">${escapeHtml(item.instruction || '')}</textarea></label>
+          <label class="field is-wide"><span class="field-label">使用器具</span><input class="field-input" data-field="equipment_name" maxlength="200" value="${escapeHtml(item.equipment_name || '')}"></label>
+          <label class="field"><span class="field-label">温度</span><input class="field-input" data-field="temperature_value" type="number" step="0.1" value="${item.temperature_value === null || item.temperature_value === '' || item.temperature_value === undefined ? '' : escapeHtml(item.temperature_value)}"></label>
+          <label class="field"><span class="field-label">温度単位</span><select class="field-input" data-field="temperature_unit_code">${unitOptionsHtml(item.temperature_unit_code || '', ['temperature'], true)}</select></label>
+          <label class="field"><span class="field-label">時間</span><input class="field-input" data-field="duration_value" type="number" min="0" step="0.1" value="${item.duration_value === null || item.duration_value === '' || item.duration_value === undefined ? '' : escapeHtml(item.duration_value)}"></label>
+          <label class="field"><span class="field-label">時間単位</span><select class="field-input" data-field="duration_unit_code">${unitOptionsHtml(item.duration_unit_code || '', ['duration'], true)}</select></label>
+          <label class="field is-wide"><span class="field-label">仕上がり判断</span><input class="field-input" data-field="checkpoint" maxlength="1000" value="${escapeHtml(item.checkpoint || '')}"></label>
+          <label class="field is-wide"><span class="field-label">工程上の注意</span><input class="field-input" data-field="caution" maxlength="1000" value="${escapeHtml(item.caution || '')}"></label>
+        </div>`;
+      card.querySelector('[data-remove-row]').addEventListener('click', () => { card.remove(); renumberEditorRows(); });
+      container.appendChild(card);
+      renumberEditorRows();
+    }
+
+    function renumberEditorRows() {
+      document.querySelectorAll('[data-ingredient-row]').forEach((row, index) => { row.querySelector('.repeat-card-title').textContent = `材料 ${index + 1}`; });
+      document.querySelectorAll('[data-step-row]').forEach((row, index) => { row.querySelector('.repeat-card-title').textContent = `工程 ${index + 1}`; });
+    }
+
+    function collectIngredientRows(patternKey) {
+      return [...document.querySelectorAll('[data-ingredient-row]')].map((row,index) => { const value=(name) => row.querySelector(`[data-field="${name}"]`).value.trim(); return { batch_pattern_key:patternKey, ingredient_group_no:1, ingredient_group_name:value('ingredient_group_name'), sort_order:index+1, ingredient_name:value('ingredient_name'), quantity:value('quantity'), unit_code:value('unit_code'), quantity_note:value('quantity_note'), preparation_note:value('preparation_note'), scaling_method:value('scaling_method') || 'proportional', is_optional:false, remarks:'' }; }).filter((item) => item.ingredient_name || item.quantity || item.quantity_note || item.preparation_note);
+    }
+
+    function collectStepRows() {
+      return [...document.querySelectorAll('[data-step-row]')].map((row, index) => {
+        const value = (name) => row.querySelector(`[data-field="${name}"]`).value.trim();
+        return {
+          step_group_no: 1,
+          step_group_name: '',
+          step_no: index + 1,
+          instruction: value('instruction'),
+          equipment_name: value('equipment_name'),
+          temperature_value: value('temperature_value'),
+          temperature_unit_code: value('temperature_unit_code'),
+          duration_value: value('duration_value'),
+          duration_unit_code: value('duration_unit_code'),
+          checkpoint: value('checkpoint'),
+          caution: value('caution')
+        };
+      }).filter((item) => item.instruction || item.equipment_name || item.checkpoint || item.caution);
+    }
+
+    function renderScopeEditor(existingScopes) {
+      const scopes = Array.isArray(existingScopes) ? existingScopes : [];
+      const hasAll = scopes.some((item) => item.scope_type === 'all');
+      const selectedCodes = new Set(scopes.filter((item) => item.scope_type === 'workplace').map((item) => item.scope_code));
+      const mode = hasAll ? 'all' : 'selected';
+      const radio = document.querySelector(`input[name="edit-scope-mode"][value="${mode}"]`);
+      if (radio) radio.checked = true;
+      const factories = (state.masters.organizations.factories || []).filter(isSelectableRecipeWorkplace);
+      const stores = (state.masters.organizations.stores || []).filter(isSelectableRecipeWorkplace);
+      const groupHtml = (title, items) => `<div style="margin-bottom:12px"><h4 class="scope-option-title">${escapeHtml(title)}</h4><div class="scope-check-grid">${items.map((item) => `<label class="scope-check"><input type="checkbox" data-scope-code="${escapeHtml(item.code)}" ${selectedCodes.has(item.code) ? 'checked' : ''}><span>${escapeHtml(item.name)}</span></label>`).join('') || '<span class="field-help">候補がありません。</span>'}</div></div>`;
+      $('edit-scope-options').innerHTML = groupHtml('製造部', factories) + groupHtml('店舗', stores);
+      updateScopeEditorVisibility();
+    }
+
+    function updateScopeEditorVisibility() {
+      const mode = (document.querySelector('input[name="edit-scope-mode"]:checked') || {}).value || 'selected';
+      $('edit-scope-options').hidden = mode === 'all';
+    }
+
+    function collectScopeRows() {
+      const mode = (document.querySelector('input[name="edit-scope-mode"]:checked') || {}).value || 'selected';
+      if (mode === 'all') return [{ scope_type:'all', scope_code:'', sort_order:1, remarks:'全社共通で使用' }];
+      return [...document.querySelectorAll('[data-scope-code]:checked')].map((input,index) => ({ scope_type:'workplace', scope_code:input.dataset.scopeCode, sort_order:index+1, remarks:'' }));
+    }
+
+    function renderAllergenEditor(status, existingAllergens) {
+      $('edit-allergen-status').value = status || 'unconfirmed';
+      const existingMap = new Map((existingAllergens || []).map((item) => [item.allergen_code, item]));
+      $('allergen-editor-list').innerHTML = (state.masters.allergens || []).map((item) => {
+        const current = existingMap.get(item.allergen_code) || {};
+        const checked = Boolean(current.allergen_code);
+        const classLabel = item.classification === 'mandatory' ? '表示義務' : '表示推奨';
+        return `<div class="allergen-editor-row" data-allergen-row data-allergen-code="${escapeHtml(item.allergen_code)}"><label class="allergen-editor-check"><input type="checkbox" data-field="selected" ${checked ? 'checked' : ''}><span>${escapeHtml(item.allergen_name)}<span class="allergen-class">${classLabel}</span></span></label><select class="field-input" data-field="presence_type"><option value="contains" ${current.presence_type === 'contains' ? 'selected' : ''}>含む</option><option value="may_contain" ${current.presence_type === 'may_contain' ? 'selected' : ''}>含む可能性</option><option value="same_equipment" ${current.presence_type === 'same_equipment' ? 'selected' : ''}>共通設備</option><option value="other" ${current.presence_type === 'other' ? 'selected' : ''}>その他</option></select><input class="field-input" data-field="remarks" maxlength="500" placeholder="補足（任意）" value="${escapeHtml(current.remarks || '')}"></div>`;
+      }).join('');
+      $('allergen-editor-list').querySelectorAll('[data-field="selected"]').forEach((checkbox) => checkbox.addEventListener('change', updateAllergenEditorVisibility));
+      updateAllergenEditorVisibility();
+    }
+
+    function updateAllergenEditorVisibility() {
+      const status = $('edit-allergen-status').value;
+      const showRows = status === 'confirmed_present';
+      $('allergen-editor-list').hidden = !showRows;
+      $('allergen-status-help').textContent = status === 'unconfirmed' ? '材料を確認後、状態を選択してください。' : status === 'confirmed_none' ? '該当するアレルゲンがないことを確認済みとして保存します。' : '該当する項目を選択し、含有状況を設定してください。';
+      document.querySelectorAll('[data-allergen-row]').forEach((row) => {
+        const checked = row.querySelector('[data-field="selected"]').checked;
+        row.querySelector('[data-field="presence_type"]').disabled = !checked;
+        row.querySelector('[data-field="remarks"]').disabled = !checked;
+      });
+    }
+
+    function collectAllergenRows() {
+      if ($('edit-allergen-status').value !== 'confirmed_present') return [];
+      return [...document.querySelectorAll('[data-allergen-row]')].filter((row) => row.querySelector('[data-field="selected"]').checked).map((row,index) => ({ allergen_code:row.dataset.allergenCode, presence_type:row.querySelector('[data-field="presence_type"]').value, sort_order:index+1, remarks:row.querySelector('[data-field="remarks"]').value.trim() }));
+    }
+
+    async function handleUpdateRecipeDraft(event) {
+      event.preventDefault(); if (!state.draftEditor || !state.draftEditor.version) return;
+      saveActiveBatchPatternForm();
+      const version=state.draftEditor.version; const patterns=state.batchPatternEditor.patterns;
+      const payload={ recipe_id:state.draftEditor.recipe.recipe_id, recipe_version_id:version.recipe_version_id, expected_updated_at:version.updated_at, expected_recipe_updated_at:state.draftEditor.recipe.updated_at,
+        recipe:{ recipe_class_code:$('edit-recipe-class').value },
+        version:{ recipe_name:$('edit-recipe-name').value.trim(), category_code:$('edit-category').value, summary:$('edit-summary').value.trim(), preparation:$('edit-preparation').value.trim(), storage_method:$('edit-storage-method').value.trim(), shelf_life_note:$('edit-shelf-life-note').value.trim(), quality_check:$('edit-quality-check').value.trim(), caution:$('edit-caution').value.trim(), allergen_check_status:$('edit-allergen-status').value },
+        batch_patterns:patterns.map((item,index) => ({client_key:item.client_key,pattern_name:item.pattern_name,multiplier_value:item.multiplier_value,yield_quantity:item.yield_quantity,yield_unit_code:item.yield_unit_code,yield_note:item.yield_note,is_default:item.is_default,process_adjustment_note:item.process_adjustment_note,sort_order:index+1})),
+        ingredients:patterns.flatMap((item) => (item.ingredients || []).map((ingredient) => ({...ingredient,batch_pattern_key:item.client_key}))), steps:collectStepRows(), scopes:collectScopeRows(), allergens:collectAllergenRows() };
+      setLoading(true,'下書きを保存しています。');
+      try { const result=await apiRequest('updateRecipeDraft',payload); state.draftEditor.version.updated_at=result.updated_at; state.draftEditor.recipe.updated_at=result.recipe_updated_at || result.updated_at; state.draftEditor.version.recipe_name=payload.version.recipe_name; state.draftEditor.recipe.recipe_class_code=payload.recipe.recipe_class_code; $('edit-recipe-result').innerHTML=`<div class="notice-box">下書きを保存しました。<br>仕込み量 ${escapeHtml(String(result.batch_pattern_count || patterns.length))}件 / 材料 ${escapeHtml(String(result.ingredient_count || 0))}件<br>更新 ${escapeHtml(formatDateTime(result.updated_at) || result.updated_at)}</div>`; await loadAdminData(); showToast('下書きを保存しました。','ok'); }
+      catch(error) { $('edit-recipe-result').innerHTML=`<div class="alert-text">${escapeHtml(error.message)}</div>`; } finally { setLoading(false); }
+    }
+
+    function collectDraftPayload() {
+      saveActiveBatchPatternForm();
+      const version=state.draftEditor.version; const patterns=state.batchPatternEditor.patterns;
+      return { recipe_id:state.draftEditor.recipe.recipe_id, recipe_version_id:version.recipe_version_id, expected_updated_at:version.updated_at, expected_recipe_updated_at:state.draftEditor.recipe.updated_at,
+        recipe:{ recipe_class_code:$('edit-recipe-class').value },
+        version:{ recipe_name:$('edit-recipe-name').value.trim(), category_code:$('edit-category').value, summary:$('edit-summary').value.trim(), preparation:$('edit-preparation').value.trim(), storage_method:$('edit-storage-method').value.trim(), shelf_life_note:$('edit-shelf-life-note').value.trim(), quality_check:$('edit-quality-check').value.trim(), caution:$('edit-caution').value.trim(), allergen_check_status:$('edit-allergen-status').value },
+        batch_patterns:patterns.map((item,index) => ({client_key:item.client_key,pattern_name:item.pattern_name,multiplier_value:item.multiplier_value,yield_quantity:item.yield_quantity,yield_unit_code:item.yield_unit_code,yield_note:item.yield_note,is_default:item.is_default,process_adjustment_note:item.process_adjustment_note,sort_order:index+1})),
+        ingredients:patterns.flatMap((item) => (item.ingredients || []).map((ingredient) => ({...ingredient,batch_pattern_key:item.client_key}))), steps:collectStepRows(), scopes:collectScopeRows(), allergens:collectAllergenRows() };
+    }
+
+    async function handleSaveAndPublish() {
+      if (!state.draftEditor || !state.draftEditor.version) return;
+      if (!window.confirm('現在の内容を保存し、正式レシピとして公開しますか？\n公開後に変更する場合は、新版下書きを作成します。')) return;
+      setLoading(true, '保存して正式公開しています。');
+      try {
+        const payload = collectDraftPayload();
+        const saved = await apiRequest('updateRecipeDraft', payload);
+        state.draftEditor.version.updated_at = saved.updated_at;
+        state.draftEditor.recipe.updated_at = saved.recipe_updated_at || saved.updated_at;
+        await apiRequest('publishRecipeVersion', {
+          recipe_version_id:payload.recipe_version_id,
+          expected_updated_at:saved.updated_at
+        });
+        $('edit-recipe-result').innerHTML = '<div class="notice-box">正式公開しました。</div>';
+        await loadHomeData();
+        await loadAdminData();
+        showToast('正式公開しました。', 'ok');
+        setTimeout(() => openScreen('admin'), 500);
+      } catch (error) {
+        $('edit-recipe-result').innerHTML = `<div class="alert-text">${escapeHtml(error.message).replace(/\n/g,'<br>')}</div>`;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+
+    function unitLabel(code) {
+      const item=(state.masters.units||[]).find((row)=>row.unit_code===code);
+      return item ? (item.unit_symbol || item.unit_name || code) : code;
+    }
+
+    function scopeLabel(scope) {
+      if (scope.scope_type === 'all') return '全社共通';
+      const item = ((state.masters.organizations || {}).workplaces || []).find((row) => row.code === scope.scope_code);
+      return item ? item.name : (scope.scope_code || scope.scope_type);
+    }
+
+    function allergenLabel(item) {
+      const master=(state.masters.allergens||[]).find((row)=>row.allergen_code===item.allergen_code);
+      const presence={contains:'含む',may_contain:'含む可能性',same_equipment:'共通設備',other:'その他'}[item.presence_type] || item.presence_type;
+      return `${master ? master.allergen_name : item.allergen_code}（${presence}）${item.remarks ? '：'+item.remarks : ''}`;
+    }
+
+    
+
+
+
+    
+
+    function renderAdminSummary(summary) {
+      const container = $('admin-summary-grid');
+      if (!summary) { container.innerHTML = ''; return; }
+      const items = [
+        ['下書き', summary.draft || 0],
+        ['公開中', summary.published || 0],
+        ['廃止済み', summary.discontinued || 0]
+      ];
+      container.innerHTML = items.map(([label, value]) => `<div class="summary-card"><div class="summary-label">${label}</div><div class="summary-value">${value}</div></div>`).join('');
+    }
+
+    function normalizeRecipeSnapshot(recipe) {
+      const item = recipe || {};
+      return {
+        recipe_id: String(item.recipe_id || ''),
+        recipe_name: String(item.recipe_name || ''),
+        summary: String(item.summary || ''),
+        category_name: String(item.category_name || ''),
+        category_code: String(item.category_code || ''),
+        icon_key: String(item.icon_key || 'recipe'),
+        color_key: String(item.color_key || 'cream'),
+        recipe_class_name: String(item.recipe_class_name || ''),
+        version_no: item.version_no || '',
+        yield_text: String(item.yield_text || formatYield(item) || ''),
+        is_favorite: Boolean(item.is_favorite)
+      };
+    }
+
+    function readLocalRecipeList(key) {
+      try {
+        const value = JSON.parse(localStorage.getItem(key) || '[]');
+        return Array.isArray(value) ? value.filter((item) => item && item.recipe_id) : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function writeLocalRecipeList(key, items) {
+      try { localStorage.setItem(key, JSON.stringify(items)); } catch (error) { /* ignore */ }
+    }
+
+    function getLocalRecent() {
+      return readLocalRecipeList(APP_CONFIG.recentStorageKey).slice(0, APP_CONFIG.maxLocalRecent);
+    }
+
+    function getLocalFavorites() {
+      return readLocalRecipeList(APP_CONFIG.favoriteStorageKey).map((item) => ({ ...item, is_favorite: true }));
+    }
+
+    function isLocalFavorite(recipeId) {
+      return getLocalFavorites().some((item) => item.recipe_id === recipeId);
+    }
+
+    function saveLocalRecent(recipe) {
+      const snapshot = normalizeRecipeSnapshot(recipe);
+      if (!snapshot.recipe_id) return;
+      const items = getLocalRecent().filter((item) => item.recipe_id !== snapshot.recipe_id);
+      items.unshift({ ...snapshot, is_favorite: isLocalFavorite(snapshot.recipe_id) });
+      writeLocalRecipeList(APP_CONFIG.recentStorageKey, items.slice(0, APP_CONFIG.maxLocalRecent));
+    }
+
+    function setLocalFavorite(recipe, shouldFavorite) {
+      const snapshot = normalizeRecipeSnapshot(recipe);
+      let items = getLocalFavorites().filter((item) => item.recipe_id !== snapshot.recipe_id);
+      if (shouldFavorite && snapshot.recipe_id) items.unshift({ ...snapshot, is_favorite: true });
+      writeLocalRecipeList(APP_CONFIG.favoriteStorageKey, items.slice(0, 50));
+      const recent = getLocalRecent().map((item) => item.recipe_id === snapshot.recipe_id ? { ...item, is_favorite: shouldFavorite } : item);
+      writeLocalRecipeList(APP_CONFIG.recentStorageKey, recent);
+    }
+
+    function syncGuestCollections() {
+      state.home.recent_recipes = getLocalRecent().map((item) => ({ ...item, is_favorite: isLocalFavorite(item.recipe_id) }));
+      state.home.favorite_recipes = getLocalFavorites();
+      state.home.latest_recipes = (state.home.latest_recipes || []).map((item) => ({ ...item, is_favorite: isLocalFavorite(item.recipe_id) }));
+      state.recipeList = (state.recipeList || []).map((item) => ({ ...item, is_favorite: isLocalFavorite(item.recipe_id) }));
+    }
+
+    function prependRecentInMemory(recipe) {
+      const snapshot = normalizeRecipeSnapshot(recipe);
+      if (!snapshot.recipe_id) return;
+      const items = (state.home.recent_recipes || []).filter((item) => item.recipe_id !== snapshot.recipe_id);
+      items.unshift(snapshot);
+      state.home.recent_recipes = items.slice(0, APP_CONFIG.maxLocalRecent);
+    }
+
+    function findRecipeSnapshot(recipeId) {
+      if (state.currentDetail && state.currentDetail.recipe && state.currentDetail.recipe.recipe_id === recipeId) return state.currentDetail.recipe;
+      const collections = [state.recipeList, state.home.latest_recipes, state.home.recent_recipes, state.home.favorite_recipes];
+      for (const items of collections) {
+        const found = (items || []).find((item) => item.recipe_id === recipeId);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    function clearRecentRecipes() {
+      if (state.auth) return;
+      writeLocalRecipeList(APP_CONFIG.recentStorageKey, []);
+      state.home.recent_recipes = [];
+      renderHomeCollections();
+      showToast('この端末の閲覧履歴を消去しました。', 'ok');
+    }
+
+    async function validateSession() {
+      const result = await apiRequest('validateRecipeAuthSession');
+      state.auth = result.auth;
+      storeAuth(state.auth);
+    }
+
+    async function validateSessionQuietly() {
+      try { await validateSession(); } catch (error) { handleSessionExpired(error); }
+    }
+
+    async function handlePageShow(event) {
+      if (event.persisted && state.auth && !state.isPreview) await validateSessionQuietly();
+    }
+
+    async function handleLogout() {
+      setLoading(true, 'ログアウトしています。');
+      try { if (!state.isPreview) await apiRequest('logoutRecipeApp'); } catch (error) { /* local logout continues */ }
+      clearStoredAuth();
+      state.auth = null;
+      state.isGuest = true;
+      state.currentDetail = null;
+      try {
+        await enterGuestApplication();
+        showToast('ログアウトし、閲覧モードへ戻りました。', 'ok');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function handleSessionExpired(error) {
+      clearStoredAuth();
+      state.auth = null;
+      state.isGuest = true;
+      enterGuestApplication()
+        .then(() => showToast('ログインの有効期限が切れたため、閲覧モードへ戻りました。', 'error'))
+        .catch(() => {
+          showLogin(false);
+          showToast(error.message || 'ログインし直してください。', 'error');
+        });
+    }
+
+    function showLogin(expandManagement = false) {
+      $('app-shell').hidden = true;
+      $('login-shell').hidden = false;
+      $('login-password').value = '';
+      $('management-login-details').open = Boolean(expandManagement);
+      if (expandManagement) setTimeout(() => $('login-id').focus(), 0);
+    }
+
+    function showApplication() {
+      $('login-shell').hidden = true;
+      $('app-shell').hidden = false;
+    }
+
+    function setLoginStatus(message, type = '') {
+      const element = $('login-status');
+      element.textContent = message;
+      element.className = `login-status${type ? ` is-${type}` : ''}`;
+    }
+
+    function setLoading(active, text = '読み込んでいます。') {
+      $('loading-text').textContent = text;
+      $('loading-overlay').hidden = !active;
+    }
+
+    function showToast(message, type = '') {
+      const toast = $('toast');
+      clearTimeout(state.toastTimer);
+      toast.textContent = message;
+      toast.className = `toast${type ? ` is-${type}` : ''}`;
+      toast.hidden = false;
+      state.toastTimer = setTimeout(() => { toast.hidden = true; }, 3600);
+    }
+
+    function showNotImplemented() {
+      showToast('新規登録・編集は次工程で有効化します。');
+    }
+
+    function handleError(error) {
+      if (['AUTH_REQUIRED', 'AUTH_SESSION_EXPIRED', 'ACCOUNT_INACTIVE', 'EMPLOYEE_INACTIVE'].includes(error.code)) {
+        handleSessionExpired(error);
+        return;
+      }
+      showToast(error.message || '処理中にエラーが発生しました。', 'error');
+    }
+
+    async function apiRequest(action, payload = {}, includeAuth = true) {
+      if (!isApiConfigured()) throw createClientError('API_URL_NOT_SET', 'GASのWebアプリURLが設定されていません。');
+      const controller = new AbortController();
+      const timeoutMs = ['getRecipeContributorAdminData', 'saveRecipeContributor'].includes(action)
+        ? APP_CONFIG.contributorTimeoutMs
+        : APP_CONFIG.timeoutMs;
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const request = {
+        action,
+        request_id: createRequestId(),
+        auth: includeAuth && state.auth ? {
+          account_id: state.auth.account_id,
+          login_id: state.auth.login_id,
+          auth_session_token: state.auth.auth_session_token
+        } : {},
+        payload
+      };
+      try {
+        const response = await fetch(APP_CONFIG.apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(request),
+          signal: controller.signal,
+          redirect: 'follow',
+          cache: 'no-store'
+        });
+        if (!response.ok) throw createClientError('HTTP_ERROR', `通信に失敗しました（${response.status}）。`);
+        const result = await response.json();
+        if (!result.ok) {
+          const error = createClientError(result.error && result.error.code, result.error && result.error.message);
+          if (error.code === 'AUTH_SESSION_EXPIRED') handleSessionExpired(error);
+          throw error;
+        }
+        return result.data || {};
+      } catch (error) {
+        if (error.name === 'AbortError') throw createClientError('TIMEOUT', '通信がタイムアウトしました。');
+        if (error.code) throw error;
+        throw createClientError('NETWORK_ERROR', 'GASへ接続できません。URLやネットワーク状態を確認してください。');
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function startPreviewMode() {
+      state.isGuest = false;
+      state.auth = {
+        is_authenticated: true, account_id: 'PREVIEW', login_id: 'preview', account_name: 'プレビュー利用者', primary_role: 'admin',
+        capabilities: { can_view: true, can_create: true, can_publish: true, can_manage: true, can_manage_contributors: true }
+      };
+      state.masters = {
+        categories: [
+          ['anko','餡','bean','azuki'], ['dango_mochi','団子・餅','dango','sakura'], ['syrup_sauce','蜜・ソース','syrup','honey'],
+          ['namagashi','生菓子','wagashi','ume'], ['baked_sweets','焼菓子','oven','kinako'], ['drink','飲料','drink','matcha']
+        ].map(([category_code,category_name,icon_key,color_key], index) => ({ category_code, category_name, icon_key, color_key, sort_order: index + 1 })),
+        recipe_classes: [
+          { recipe_class_code: 'company_common', recipe_class_name: '全社共通' },
+          { recipe_class_code: 'official', recipe_class_name: '正式レシピ' },
+          { recipe_class_code: 'trial', recipe_class_name: '試作レシピ' },
+          { recipe_class_code: 'reference', recipe_class_name: '参考レシピ' }
+        ], units: [], allergens: []
+      };
+      const samples = [
+        { recipe_id:'RCP-P1', recipe_name:'新生姜蜜', summary:'新生姜の香りとスパイスを活かした蜜。', category_name:'蜜・ソース', category_code:'syrup_sauce', icon_key:'syrup', color_key:'honey', recipe_class_name:'全社共通', version_no:2, yield_text:'1000g', usage_location_text:'第一製造部・各店舗', is_favorite:true },
+        { recipe_id:'RCP-P2', recipe_name:'みたらし団子', summary:'もっちりとした団子と香ばしい蜜。', category_name:'団子・餅', category_code:'dango_mochi', icon_key:'dango', color_key:'sakura', recipe_class_name:'正式レシピ', version_no:4, yield_text:'30個', usage_location_text:'全社共通', is_favorite:false },
+        { recipe_id:'RCP-P3', recipe_name:'抹茶あん', summary:'抹茶の香りを引き立てた仕込み餡。', category_name:'餡', category_code:'anko', icon_key:'bean', color_key:'azuki', recipe_class_name:'試作レシピ', version_no:1, yield_text:'2kg', usage_location_text:'第一製造部', is_favorite:false }
+      ];
+      state.home = { latest_recipes:samples, recent_recipes:samples.slice(0,2), favorite_recipes:samples.filter((item)=>item.is_favorite), admin_summary:{draft:4,published:12,discontinued:2} };
+      state.recipeList = samples;
+      applyAuthToUi();
+      renderCategories();
+      renderMasterOptions();
+      renderRecipeGrid('latest-recipe-grid', samples, '');
+      renderRecipeGrid('recent-recipe-grid', samples.slice(0,2), '');
+      renderRecipeGrid('home-favorite-recipe-grid', samples.filter((item)=>item.is_favorite), '');
+      renderRecipeGrid('favorite-recipe-grid', samples.filter((item)=>item.is_favorite), '');
+      renderRecipeGrid('recipe-list-grid', samples, '');
+      $('recipe-result-line').textContent = `${samples.length}件`;
+      renderAdminSummary(state.home.admin_summary);
+      showApplication();
+      openScreen('home');
+    }
+
+    function isApiConfigured() {
+      return APP_CONFIG.apiUrl && !APP_CONFIG.apiUrl.includes('__RECIPE_GAS_WEB_APP_URL__');
+    }
+
+    function storeAuth(auth) {
+      try { sessionStorage.setItem(APP_CONFIG.sessionStorageKey, JSON.stringify(auth)); } catch (error) { /* ignore */ }
+    }
+
+    function loadStoredAuth() {
+      try { return JSON.parse(sessionStorage.getItem(APP_CONFIG.sessionStorageKey) || 'null'); } catch (error) { return null; }
+    }
+
+    function clearStoredAuth() {
+      try { sessionStorage.removeItem(APP_CONFIG.sessionStorageKey); } catch (error) { /* ignore */ }
+    }
+
+    function createRequestId() {
+      const random = (crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      return `recipe:${random}`;
+    }
+
+    function createClientError(code, message) {
+      const error = new Error(message || '処理中にエラーが発生しました。');
+      error.code = code || 'CLIENT_ERROR';
+      return error;
+    }
+
+    function emptyStateHtml(text) {
+      return `<div class="empty-state"><div class="empty-icon" aria-hidden="true">${iconSvg('cup', 40)}</div><h3 class="empty-title">まだレシピがありません</h3><p class="empty-text">${escapeHtml(text)}</p></div>`;
+    }
+
+    function categoryColor(key) { return COLOR_MAP[key] || '#f5eee5'; }
+
+    function groupBy(items, getKey) {
+      return items.reduce((result, item) => {
+        const key = getKey(item);
+        (result[key] || (result[key] = [])).push(item);
+        return result;
+      }, {});
+    }
+
+    function formatIngredientQuantity(item) {
+      if (item.quantity !== null && item.quantity !== undefined) return `${formatNumber(item.quantity)}${item.unit_symbol || ''}`;
+      return item.quantity_note || '';
+    }
+
+    function formatYield(recipe) {
+      if (recipe.yield_quantity !== null && recipe.yield_quantity !== undefined) return `${formatNumber(recipe.yield_quantity)}${recipe.yield_unit_symbol || ''}`;
+      return recipe.yield_note || '';
+    }
+
+    function formatAllergens(items, status) {
+      if (status === 'unconfirmed' || !status) return '未確認';
+      if (status === 'confirmed_none') return '確認済み・該当なし';
+      if (!items.length) return '確認済み';
+      return items.map((item) => item.allergen_name).join('、');
+    }
+
+    function formatNumber(value) {
+      const number = Number(value);
+      return Number.isFinite(number) ? number.toLocaleString('ja-JP', { maximumFractionDigits: 3 }) : '';
+    }
+
+    function formatDateTime(value) {
+      if (!value) return '';
+      const text = String(value);
+      return text.length >= 16 ? text.slice(0, 16) : text;
+    }
+
+    function formatDate(value) {
+      if (!value) return '';
+      const normalized = String(value).replace(/-/g, '/');
+      const date = new Date(normalized);
+      if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
+      return new Intl.DateTimeFormat('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit' }).format(date);
+    }
+
+    function escapeHtml(value) {
+      return String(value === null || value === undefined ? '' : value)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
