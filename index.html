@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7b8a2">
-  <title>梅園レシピ帳 v0.2-5_work</title>
+  <title>梅園レシピ帳 v0.2_complete</title>
   <style>
     :root {
       --bg: #fff9ef;
@@ -574,6 +574,30 @@
       font-weight: 800;
     }
     .result-line { margin: 12px 2px; color: var(--muted); font-size: 12px; font-weight: 800; }
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+    .pagination-button {
+      min-width: 42px;
+      min-height: 38px;
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .pagination-button.is-current { border-color: var(--brand); background: var(--brand); color: #fff; }
+    .pagination-button:disabled { background: #f3f0eb; color: #a69990; }
+    .pagination-info { min-width: 92px; color: var(--muted); font-size: 11px; font-weight: 900; text-align: center; }
+    .admin-filter-bar { grid-template-columns: minmax(220px, 1fr) 170px 190px auto auto; margin-top: 16px; }
 
     .admin-summary-grid {
       display: grid;
@@ -663,6 +687,16 @@
     }
     .status-pill.is-draft { background: #fff0cb; color: #765600; }
     .status-pill.is-published { background: #e1efe2; color: #285c33; }
+    .status-pill.is-superseded { background: #f0ede8; color: #6b625c; }
+    .version-history-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    .version-history-summary { padding:16px; border:1px solid var(--line); border-radius:18px; background:#fffaf4; box-shadow:var(--shadow-soft); }
+    .version-history-list { display:grid; gap:10px; margin-top:14px; }
+    .version-history-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:center; padding:15px 16px; border:1px solid var(--line); border-radius:17px; background:#fff; box-shadow:var(--shadow-soft); }
+    .version-history-row.is-current { border-color:rgba(112,143,98,.42); box-shadow:0 0 0 3px rgba(112,143,98,.08), var(--shadow-soft); }
+    .version-history-title { margin:0; font-size:15px; font-weight:900; }
+    .version-history-meta { margin-top:5px; color:var(--muted); font-size:11px; font-weight:800; line-height:1.7; }
+    .version-history-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:center; gap:8px; }
+    @media (max-width:680px) { .version-history-head, .version-history-row { grid-template-columns:1fr; display:grid; } .version-history-actions { justify-content:flex-start; } }
     .create-result { margin-top: 12px; }
     .editor-section {
       margin-top: 18px;
@@ -993,6 +1027,7 @@
       .category-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .recipe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .filter-bar { grid-template-columns: minmax(0,1fr) 1fr; }
+      .admin-filter-bar { grid-template-columns: minmax(0,1fr) 1fr; }
       .admin-summary-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
     }
 
@@ -1011,6 +1046,7 @@
       .recipe-card { grid-template-columns: 115px minmax(0,1fr); grid-template-rows: 1fr; min-height: 145px; }
       .recipe-cover { min-height: 145px; }
       .filter-bar { grid-template-columns: 1fr; }
+      .admin-filter-bar { grid-template-columns: 1fr; }
       .admin-summary-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
       .detail-hero { min-height: 180px; }
       .form-two-column { grid-template-columns: 1fr; }
@@ -1070,7 +1106,7 @@
         <div class="brand-mini" aria-hidden="true"><span class="icon-slot" data-icon="umezono-dango" data-icon-size="24"></span></div>
         <div class="brand-copy">
           <h1 class="brand-name">梅園レシピ帳</h1>
-          <p class="brand-version">v0.2-5_work</p>
+          <p class="brand-version">v0.2_complete</p>
         </div>
       </div>
       <div class="topbar-actions">
@@ -1165,6 +1201,7 @@
         </form>
         <div id="recipe-result-line" class="result-line">0件</div>
         <div id="recipe-list-grid" class="recipe-grid"></div>
+        <div id="recipe-pagination" class="pagination" aria-label="レシピ一覧のページ切替"></div>
       </section>
 
       <section id="screen-favorites" class="screen" data-screen="favorites">
@@ -1190,7 +1227,36 @@
         </div>
         <div id="admin-summary-grid" class="admin-summary-grid"></div>
         <div class="notice-box">下書きは投稿可能者全員が編集・正式公開できます。公開中のレシピを変更するときは「新版作成」から新しい下書きを作ります。この画面では社員マスタを読み込みません。</div>
+        <form id="admin-filter-form" class="filter-bar admin-filter-bar">
+          <input id="admin-keyword" class="filter-control" type="search" placeholder="レシピ名・ID・作成者で検索">
+          <select id="admin-status" class="filter-control" aria-label="状態">
+            <option value="">すべての状態</option>
+            <option value="draft">下書き</option>
+            <option value="published">公開中</option>
+            <option value="superseded">過去版</option>
+            <option value="discontinued">廃止</option>
+          </select>
+          <select id="admin-category" class="filter-control" aria-label="カテゴリ">
+            <option value="">すべてのカテゴリ</option>
+          </select>
+          <button class="primary-button button-with-icon" type="submit"><span class="icon-slot" data-icon="search" data-icon-size="17"></span><span>絞り込む</span></button>
+          <button id="admin-filter-reset" class="ghost-button" type="button">条件をクリア</button>
+        </form>
+        <div id="admin-result-line" class="result-line">0件</div>
         <div id="admin-recipe-list" class="admin-list"></div>
+        <div id="admin-pagination" class="pagination" aria-label="管理一覧のページ切替"></div>
+      </section>
+
+      <section id="screen-version-history" class="screen" data-screen="version-history">
+        <div class="version-history-head">
+          <div>
+            <h2 class="section-title">版履歴</h2>
+            <p class="section-note">公開中・下書き・過去版を版番号順に確認します。</p>
+          </div>
+          <button id="version-history-back" class="ghost-button button-with-icon" type="button"><span class="icon-slot" data-icon="arrow-left" data-icon-size="17"></span><span>レシピ管理へ戻る</span></button>
+        </div>
+        <div id="version-history-summary" class="version-history-summary"></div>
+        <div id="version-history-list" class="version-history-list"></div>
       </section>
 
       <section id="screen-contributors" class="screen" data-screen="contributors">
@@ -1393,7 +1459,7 @@
     'use strict';
 
     const APP_CONFIG = Object.freeze({
-      version: 'v0.2-5_work',
+      version: 'v0.2_complete',
       apiUrl: 'https://script.google.com/macros/s/AKfycbyvpT8d7SrctV8vHGz1389z6Atn3lkXVfk4pwL-hyJhuF43o2BbS4Ww74tTCENNydnh/exec',
       portalUrl: 'https://umezono-systems.github.io/umezono-portal/',
       timeoutMs: 30000,
@@ -1460,8 +1526,11 @@
       masters: { categories: [], recipe_classes: [], units: [], allergens: [], organizations: { departments: [], workplaces: [], sections: [] } },
       app: null,
       adminItems: [],
+      currentHistoryRecipeId: '',
       home: { latest_recipes: [], recent_recipes: [], favorite_recipes: [], admin_summary: null },
       recipeList: [],
+      recipePagination: { page: 1, pageSize: 20, total: 0, totalPages: 1 },
+      adminFilter: { keyword: '', status: '', categoryCode: '', page: 1, pageSize: 20 },
       currentScreen: 'home',
       previousScreen: 'home',
       currentDetail: null,
@@ -1559,9 +1628,23 @@
       $('hero-new-recipe').addEventListener('click', openCreateRecipeScreen);
       $('admin-new-recipe').addEventListener('click', openCreateRecipeScreen);
       $('admin-open-contributors').addEventListener('click', () => openScreen('contributors'));
+      $('version-history-back').addEventListener('click', () => openScreen('admin'));
       $('contributors-back-button').addEventListener('click', () => openScreen('admin'));
       $('home-search-form').addEventListener('submit', handleHomeSearch);
       $('recipe-filter-form').addEventListener('submit', handleRecipeFilter);
+      $('admin-filter-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        state.adminFilter.keyword = $('admin-keyword').value.trim().toLowerCase();
+        state.adminFilter.status = $('admin-status').value;
+        state.adminFilter.categoryCode = $('admin-category').value;
+        state.adminFilter.page = 1;
+        renderAdminRecipeList();
+      });
+      $('admin-filter-reset').addEventListener('click', () => {
+        $('admin-filter-form').reset();
+        state.adminFilter = { keyword: '', status: '', categoryCode: '', page: 1, pageSize: state.adminFilter.pageSize || 20 };
+        renderAdminRecipeList();
+      });
       $('clear-recent-button').addEventListener('click', clearRecentRecipes);
       $('create-recipe-form').addEventListener('submit', handleCreateRecipe);
       $('create-recipe-cancel').addEventListener('click', () => openScreen('admin'));
@@ -1727,37 +1810,84 @@
       event.preventDefault();
       $('recipe-keyword').value = $('home-search-input').value.trim();
       openScreen('recipes');
-      await loadRecipeList();
+      await loadRecipeList({ page: 1 });
     }
 
     async function handleRecipeFilter(event) {
       event.preventDefault();
-      await loadRecipeList();
+      await loadRecipeList({ page: 1 });
     }
 
     async function loadRecipeList(overrides = {}) {
       const silent = Boolean(overrides.silent);
       if (!silent) setLoading(true, 'レシピを探しています。');
       try {
+        const requestedPage = Math.max(1, Number(overrides.page || state.recipePagination.page || 1));
+        const requestedPageSize = Math.max(1, Number(state.recipePagination.pageSize || 20));
         const payload = {
           keyword: overrides.keyword !== undefined ? overrides.keyword : $('recipe-keyword').value.trim(),
           category_codes: overrides.categoryCode ? [overrides.categoryCode] : ($('recipe-category').value ? [$('recipe-category').value] : []),
           recipe_class_codes: $('recipe-class').value ? [$('recipe-class').value] : [],
-          page: 1,
-          page_size: 100,
+          page: requestedPage,
+          page_size: requestedPageSize,
           sort_key: 'updated_at',
           sort_direction: 'desc'
         };
         if (overrides.categoryCode) $('recipe-category').value = overrides.categoryCode;
         const result = await apiRequest('getRecipeList', payload);
         state.recipeList = result.items || [];
+        const pagination = result.pagination || {};
+        const total = Math.max(0, Number(pagination.total ?? state.recipeList.length));
+        const pageSize = Math.max(1, Number(pagination.page_size || pagination.pageSize || requestedPageSize));
+        const totalPages = Math.max(1, Number(pagination.total_pages || pagination.totalPages || Math.ceil(total / pageSize) || 1));
+        const page = Math.min(totalPages, Math.max(1, Number(pagination.page || requestedPage)));
+        state.recipePagination = { page, pageSize, total, totalPages };
         if (!state.auth) syncGuestCollections();
-        $('recipe-result-line').textContent = `${result.pagination ? result.pagination.total : state.recipeList.length}件`;
+        const first = total ? ((page - 1) * pageSize) + 1 : 0;
+        const last = total ? Math.min(total, first + state.recipeList.length - 1) : 0;
+        $('recipe-result-line').textContent = total ? `${total}件中 ${first}～${last}件を表示` : '0件';
         renderRecipeGrid('recipe-list-grid', state.recipeList, '条件に合うレシピがありません。');
+        renderRecipePagination();
         if (state.currentScreen === 'recipes') persistUiState();
       } finally {
         if (!silent) setLoading(false);
       }
+    }
+
+    function renderRecipePagination() {
+      const container = $('recipe-pagination');
+      const { page, totalPages } = state.recipePagination;
+      renderPagination(container, page, totalPages, async (nextPage) => {
+        await loadRecipeList({ page: nextPage });
+        const target = $('recipe-result-line');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
+    function renderPagination(container, currentPage, totalPages, onChange) {
+      if (!container) return;
+      const pages = Math.max(1, Number(totalPages || 1));
+      const current = Math.min(pages, Math.max(1, Number(currentPage || 1)));
+      if (pages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+      const pageNumbers = [];
+      const start = Math.max(1, current - 2);
+      const end = Math.min(pages, current + 2);
+      for (let pageNo = start; pageNo <= end; pageNo += 1) pageNumbers.push(pageNo);
+      container.innerHTML = `
+        <button class="pagination-button" type="button" data-page="${current - 1}" ${current <= 1 ? 'disabled' : ''}>前へ</button>
+        ${start > 1 ? `<button class="pagination-button" type="button" data-page="1">1</button>${start > 2 ? '<span class="pagination-info">…</span>' : ''}` : ''}
+        ${pageNumbers.map((pageNo) => `<button class="pagination-button ${pageNo === current ? 'is-current' : ''}" type="button" data-page="${pageNo}" ${pageNo === current ? 'aria-current="page"' : ''}>${pageNo}</button>`).join('')}
+        ${end < pages ? `${end < pages - 1 ? '<span class="pagination-info">…</span>' : ''}<button class="pagination-button" type="button" data-page="${pages}">${pages}</button>` : ''}
+        <button class="pagination-button" type="button" data-page="${current + 1}" ${current >= pages ? 'disabled' : ''}>次へ</button>
+        <span class="pagination-info">${current} / ${pages}ページ</span>`;
+      container.querySelectorAll('[data-page]').forEach((button) => button.addEventListener('click', () => {
+        const nextPage = Number(button.dataset.page || 0);
+        if (!nextPage || nextPage === current || nextPage < 1 || nextPage > pages) return;
+        onChange(nextPage);
+      }));
     }
 
     function renderCategories() {
@@ -1771,13 +1901,14 @@
       `).join('');
       grid.querySelectorAll('[data-category-code]').forEach((button) => button.addEventListener('click', async () => {
         openScreen('recipes');
-        await loadRecipeList({ categoryCode: button.dataset.categoryCode });
+        await loadRecipeList({ categoryCode: button.dataset.categoryCode, page: 1 });
       }));
     }
 
     function renderMasterOptions() {
       $('recipe-category').innerHTML = '<option value="">すべてのカテゴリ</option>' + (state.masters.categories || []).map((item) => `<option value="${escapeHtml(item.category_code)}">${escapeHtml(item.category_name)}</option>`).join('');
       $('recipe-class').innerHTML = '<option value="">すべての区分</option>' + (state.masters.recipe_classes || []).map((item) => `<option value="${escapeHtml(item.recipe_class_code)}">${escapeHtml(item.recipe_class_name)}</option>`).join('');
+      $('admin-category').innerHTML = '<option value="">すべてのカテゴリ</option>' + (state.masters.categories || []).map((item) => `<option value="${escapeHtml(item.category_code)}">${escapeHtml(item.category_name)}</option>`).join('');
     }
 
     function renderRecipeGrid(containerId, recipes, emptyText) {
@@ -1989,10 +2120,12 @@
       }
       if (screenName === 'admin' && !(state.auth && state.auth.capabilities && state.auth.capabilities.can_manage)) return;
       if (screenName === 'contributors' && !(state.auth && state.auth.capabilities && state.auth.capabilities.can_manage_contributors)) return;
+      if (screenName === 'version-history' && !(state.auth && state.auth.capabilities && state.auth.capabilities.can_manage)) return;
       if (screenName === 'create-recipe' && !(state.auth && state.auth.capabilities && state.auth.capabilities.can_create)) return;
       if (screenName === 'edit-recipe' && !(state.auth && state.auth.capabilities && state.auth.capabilities.can_create)) return;
       document.querySelectorAll('.screen').forEach((screen) => screen.classList.toggle('is-active', screen.dataset.screen === screenName));
       document.querySelectorAll('[data-nav-screen]').forEach((button) => button.classList.toggle('is-active', button.dataset.navScreen === screenName));
+      if (screenName === 'version-history' && $('admin-nav-button')) $('admin-nav-button').classList.add('is-active');
       state.currentScreen = screenName;
       if (!options.skipAutoLoad && screenName === 'recipes' && !state.recipeList.length && !state.isPreview) loadRecipeList().catch(handleError);
       if (!options.skipAutoLoad && screenName === 'admin' && !state.isPreview) loadAdminData();
@@ -2089,24 +2222,66 @@
     }
 
     function renderAdminRecipeLoading() {
+      $('admin-result-line').textContent = '読み込み中';
+      $('admin-pagination').innerHTML = '';
       $('admin-recipe-list').innerHTML = '<div class="empty-state"><div class="spinner" aria-hidden="true"></div><h3 class="empty-title">レシピ一覧を読み込んでいます</h3><p class="empty-text">GASから管理用の一覧を取得しています。</p></div>';
     }
 
     function renderAdminRecipeLoadError(error) {
+      $('admin-result-line').textContent = '取得失敗';
+      $('admin-pagination').innerHTML = '';
       const message = error && error.message ? error.message : '接続エラー';
       $('admin-recipe-list').innerHTML = `<div class="empty-state"><span class="empty-icon">${iconSvg('refresh-cw', 40)}</span><h3 class="empty-title">レシピ一覧を取得できませんでした</h3><p class="empty-text">${escapeHtml(message)}</p><button class="secondary-button button-with-icon" type="button" data-retry-admin-list>${iconSvg('refresh-cw', 17)}<span>再読み込み</span></button></div>`;
       const retryButton = $('admin-recipe-list').querySelector('[data-retry-admin-list]');
       if (retryButton) retryButton.addEventListener('click', loadAdminData);
     }
 
+    function getFilteredAdminItems() {
+      const keyword = String(state.adminFilter.keyword || '').toLowerCase();
+      const status = String(state.adminFilter.status || '');
+      const categoryCode = String(state.adminFilter.categoryCode || '');
+      return (state.adminItems || []).filter((item) => {
+        const displayStatus = String(item.display_status || item.version_status || '');
+        const statusMatched = !status || (status === 'draft'
+          ? ['draft', 'review_pending', 'returned'].includes(displayStatus)
+          : displayStatus === status);
+        const categoryMatched = !categoryCode || String(item.category_code || '') === categoryCode;
+        const haystack = [
+          item.recipe_name, item.recipe_id, item.recipe_version_id,
+          item.created_by_account_id, item.updated_by_account_id, item.published_by_account_id
+        ].map((value) => String(value || '').toLowerCase()).join(' ');
+        return statusMatched && categoryMatched && (!keyword || haystack.includes(keyword));
+      });
+    }
+
     function renderAdminRecipeList() {
       const container = $('admin-recipe-list');
       if (!state.adminItems.length) {
+        $('admin-result-line').textContent = '0件';
+        $('admin-pagination').innerHTML = '';
         container.innerHTML = '<div class="empty-state"><span class="empty-icon">' + iconSvg('book-open', 40) + '</span><h3 class="empty-title">登録済みのレシピはありません</h3><p class="empty-text">「新しいレシピ」から最初の下書きを作成してください。</p></div>';
         return;
       }
+      const filtered = getFilteredAdminItems();
+      const pageSize = Math.max(1, Number(state.adminFilter.pageSize || 20));
+      const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+      state.adminFilter.page = Math.min(totalPages, Math.max(1, Number(state.adminFilter.page || 1)));
+      const startIndex = (state.adminFilter.page - 1) * pageSize;
+      const pageItems = filtered.slice(startIndex, startIndex + pageSize);
+      const first = filtered.length ? startIndex + 1 : 0;
+      const last = filtered.length ? startIndex + pageItems.length : 0;
+      $('admin-result-line').textContent = filtered.length ? `${filtered.length}件中 ${first}～${last}件を表示` : '0件';
+      if (!pageItems.length) {
+        container.innerHTML = '<div class="empty-state"><span class="empty-icon">' + iconSvg('search', 40) + '</span><h3 class="empty-title">条件に合うレシピはありません</h3><p class="empty-text">検索条件を変更して再度お試しください。</p></div>';
+        $('admin-pagination').innerHTML = '';
+        return;
+      }
       const statusLabels = { draft:'下書き', review_pending:'下書き', returned:'下書き', published:'公開中', superseded:'過去版', discontinued:'廃止' };
-      container.innerHTML = state.adminItems.map((item) => {
+      const historyButtonRecipeIds = new Set();
+      // ページより前に同じレシピがあっても、各ページの先頭行には版履歴ボタンを表示できるようページ単位で判定する。
+      container.innerHTML = pageItems.map((item) => {
+        const showHistoryButton = !historyButtonRecipeIds.has(item.recipe_id);
+        historyButtonRecipeIds.add(item.recipe_id);
         const displayStatus = item.display_status || item.version_status;
         const statusClass = displayStatus === 'draft' ? 'is-draft' : displayStatus === 'published' ? 'is-published' : '';
         const audit = [
@@ -2124,11 +2299,70 @@
             <span class="status-pill ${statusClass}">${escapeHtml(statusLabels[item.version_status] || item.version_status)}</span>
             ${item.can_edit ? `<button class="small-button button-with-icon" type="button" data-edit-version-id="${escapeHtml(item.recipe_version_id)}">${iconSvg('pencil', 15)}<span>編集・公開</span></button>` : ''}
             ${item.can_create_new_version ? `<button class="small-button button-with-icon" type="button" data-new-version-recipe-id="${escapeHtml(item.recipe_id)}">${iconSvg('copy', 15)}<span>新版作成</span></button>` : ''}
+            ${showHistoryButton ? `<button class="small-button button-with-icon" type="button" data-version-history-recipe-id="${escapeHtml(item.recipe_id)}">${iconSvg('archive', 15)}<span>版履歴</span></button>` : ''}
           </div>
         </article>`;
       }).join('');
       container.querySelectorAll('[data-edit-version-id]').forEach((button) => button.addEventListener('click', () => openDraftEditor(button.dataset.editVersionId)));
       container.querySelectorAll('[data-new-version-recipe-id]').forEach((button) => button.addEventListener('click', () => handleCreateNewVersion(button.dataset.newVersionRecipeId)));
+      container.querySelectorAll('[data-version-history-recipe-id]').forEach((button) => button.addEventListener('click', () => openVersionHistory(button.dataset.versionHistoryRecipeId)));
+      renderPagination($('admin-pagination'), state.adminFilter.page, totalPages, (nextPage) => {
+        state.adminFilter.page = nextPage;
+        renderAdminRecipeList();
+        const target = $('admin-result-line');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
+
+    function openVersionHistory(recipeId) {
+      if (!(state.auth && state.auth.capabilities && state.auth.capabilities.can_manage)) return;
+      const normalizedId = String(recipeId || '').trim();
+      if (!normalizedId) return;
+      state.currentHistoryRecipeId = normalizedId;
+      renderVersionHistory();
+      openScreen('version-history');
+    }
+
+    function renderVersionHistory() {
+      const recipeId = String(state.currentHistoryRecipeId || '').trim();
+      const items = (state.adminItems || [])
+        .filter((item) => String(item.recipe_id || '') === recipeId)
+        .sort((a, b) => Number(b.version_no || 0) - Number(a.version_no || 0));
+      const summary = $('version-history-summary');
+      const list = $('version-history-list');
+      if (!items.length) {
+        summary.innerHTML = '<h3 class="empty-title">版情報を確認できません</h3><p class="empty-text">レシピ管理画面へ戻って一覧を再読み込みしてください。</p>';
+        list.innerHTML = '';
+        return;
+      }
+      const latest = items[0];
+      const currentPublished = items.find((item) => String(item.recipe_version_id || '') === String(item.current_published_version_id || ''));
+      const draftCount = items.filter((item) => ['draft','review_pending','returned'].includes(item.version_status)).length;
+      const pastCount = items.filter((item) => item.version_status === 'superseded').length;
+      summary.innerHTML = `<h3 class="admin-recipe-name">${escapeHtml(latest.recipe_name || '名称未設定')}</h3><div class="admin-recipe-meta">${escapeHtml(recipeId)} ・ ${escapeHtml(latest.category_name || '未分類')} ・ ${escapeHtml(latest.recipe_class_name || '')}<br>全${escapeHtml(String(items.length))}版 / 公開中 ${currentPublished ? `Ver.${escapeHtml(String(currentPublished.version_no || ''))}` : 'なし'} / 下書き ${escapeHtml(String(draftCount))}件 / 過去版 ${escapeHtml(String(pastCount))}件</div>`;
+      const statusLabels = { draft:'下書き', review_pending:'下書き', returned:'下書き', published:'公開中', superseded:'過去版', discontinued:'廃止' };
+      list.innerHTML = items.map((item) => {
+        const isCurrent = String(item.recipe_version_id || '') === String(item.current_published_version_id || '');
+        const displayStatus = item.display_status || item.version_status;
+        const statusClass = displayStatus === 'draft' ? 'is-draft' : displayStatus === 'published' ? 'is-published' : item.version_status === 'superseded' ? 'is-superseded' : '';
+        const auditLines = [
+          item.created_by_account_id ? `作成者 ${item.created_by_account_id}` : '',
+          item.updated_by_account_id ? `更新者 ${item.updated_by_account_id}` : '',
+          item.published_by_account_id ? `公開者 ${item.published_by_account_id}` : '',
+          item.published_at ? `公開日時 ${formatDateTime(item.published_at) || item.published_at}` : '',
+          item.updated_at ? `最終更新 ${formatDateTime(item.updated_at) || item.updated_at}` : ''
+        ].filter(Boolean);
+        return `<article class="version-history-row ${isCurrent ? 'is-current' : ''}">
+          <div><h3 class="version-history-title">Ver.${escapeHtml(String(item.version_no || ''))}${isCurrent ? '　現在公開中' : ''}</h3><div class="version-history-meta">${escapeHtml(item.recipe_version_id || '')}${auditLines.length ? `<br>${auditLines.map(escapeHtml).join('<br>')}` : ''}</div></div>
+          <div class="version-history-actions"><span class="status-pill ${statusClass}">${escapeHtml(statusLabels[item.version_status] || item.version_status || '不明')}</span>
+            ${item.can_edit ? `<button class="small-button button-with-icon" type="button" data-history-edit-version-id="${escapeHtml(item.recipe_version_id)}">${iconSvg('pencil',15)}<span>編集・公開</span></button>` : ''}
+            ${isCurrent ? `<button class="small-button button-with-icon" type="button" data-history-open-recipe-id="${escapeHtml(item.recipe_id)}">${iconSvg('book-open',15)}<span>公開内容を見る</span></button>` : ''}
+          </div></article>`;
+      }).join('');
+      list.querySelectorAll('[data-history-edit-version-id]').forEach((button) => button.addEventListener('click', () => openDraftEditor(button.dataset.historyEditVersionId)));
+      list.querySelectorAll('[data-history-open-recipe-id]').forEach((button) => button.addEventListener('click', () => openRecipeDetail(button.dataset.historyOpenRecipeId, { previousScreen:'version-history' })));
+      hydrateIcons($('screen-version-history'));
     }
 
     async function loadContributorData(forceRefresh = false) {
@@ -2931,7 +3165,9 @@
       renderRecipeGrid('home-favorite-recipe-grid', samples.filter((item)=>item.is_favorite), '');
       renderRecipeGrid('favorite-recipe-grid', samples.filter((item)=>item.is_favorite), '');
       renderRecipeGrid('recipe-list-grid', samples, '');
+      state.recipePagination = { page: 1, pageSize: 20, total: samples.length, totalPages: 1 };
       $('recipe-result-line').textContent = `${samples.length}件`;
+      renderRecipePagination();
       renderAdminSummary(state.home.admin_summary);
       showApplication();
       openScreen('home');
@@ -2958,7 +3194,8 @@
       return {
         keyword: $('recipe-keyword') ? $('recipe-keyword').value.trim() : '',
         category_code: $('recipe-category') ? $('recipe-category').value : '',
-        recipe_class_code: $('recipe-class') ? $('recipe-class').value : ''
+        recipe_class_code: $('recipe-class') ? $('recipe-class').value : '',
+        page: state.recipePagination.page || 1
       };
     }
 
@@ -2967,6 +3204,7 @@
       if ($('recipe-keyword')) $('recipe-keyword').value = filters.keyword || '';
       if ($('recipe-category')) $('recipe-category').value = filters.category_code || '';
       if ($('recipe-class')) $('recipe-class').value = filters.recipe_class_code || '';
+      state.recipePagination.page = Math.max(1, Number(filters.page || 1));
     }
 
     function isPublicRestorableScreen(screenName) {
@@ -2976,7 +3214,7 @@
     function createPublicScreenSnapshot(screen) {
       if (!isPublicRestorableScreen(screen)) return null;
       if (screen === 'detail') return state.currentDetail ? { detail: state.currentDetail } : null;
-      if (screen === 'recipes') return { items: state.recipeList || [], result_text: $('recipe-result-line') ? $('recipe-result-line').textContent : '' };
+      if (screen === 'recipes') return { items: state.recipeList || [], result_text: $('recipe-result-line') ? $('recipe-result-line').textContent : '', pagination: state.recipePagination };
       if (screen === 'favorites') return { items: (state.home && state.home.favorite_recipes) || [] };
       return {
         latest_recipes: (state.home && state.home.latest_recipes) || [],
@@ -2999,7 +3237,9 @@
         } else if (saved.screen === 'recipes') {
           state.recipeList = Array.isArray(saved.snapshot.items) ? saved.snapshot.items : [];
           $('recipe-result-line').textContent = saved.snapshot.result_text || `${state.recipeList.length}件`;
+          state.recipePagination = saved.snapshot.pagination || { page: 1, pageSize: 20, total: state.recipeList.length, totalPages: 1 };
           renderRecipeGrid('recipe-list-grid', state.recipeList, '条件に合うレシピがありません。');
+          renderRecipePagination();
         } else if (saved.screen === 'favorites') {
           state.home.favorite_recipes = Array.isArray(saved.snapshot.items) ? saved.snapshot.items : [];
           renderRecipeGrid('favorite-recipe-grid', state.home.favorite_recipes, 'お気に入りにしたレシピがここに表示されます。');
@@ -3059,7 +3299,7 @@
           return true;
         }
         if (saved.screen === 'recipes') {
-          await loadRecipeList({ silent: Boolean(options.silent) });
+          await loadRecipeList({ silent: Boolean(options.silent), page: state.recipePagination.page || 1 });
           openScreen('recipes', { skipAutoLoad: true, instant: Boolean(options.silent) });
           homePromise.catch(handleError);
           return true;
