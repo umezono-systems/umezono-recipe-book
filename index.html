@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7b8a2">
-  <title>梅園レシピ帳 v0.2-1_work</title>
+  <title>梅園レシピ帳 v0.2-2_work</title>
   <style>
     :root {
       --bg: #fff9ef;
@@ -749,6 +749,40 @@
     }
     .admin-row-actions { display: flex; align-items: center; gap: 8px; }
     .draft-save-note { margin-top: 8px; color: var(--muted); font-size: 11px; font-weight: 700; }
+    .edit-save-state {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      margin-top: 16px;
+      padding: 10px 13px;
+      border: 1px solid #cfe0c8;
+      border-radius: 14px;
+      background: #f4faef;
+      color: #3f7040;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .edit-save-state::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .edit-save-state.is-dirty {
+      border-color: #ead497;
+      background: #fff9e8;
+      color: #735700;
+    }
+    .edit-save-state.is-saving {
+      border-color: #efc9bd;
+      background: #fff4ef;
+      color: var(--brand-dark);
+    }
+    .edit-save-state.is-saving::before { animation: savePulse .85s ease-in-out infinite alternate; }
+    @keyframes savePulse { from { opacity: .3; transform: scale(.75); } to { opacity: 1; transform: scale(1.15); } }
 
     .detail-panel {
       overflow: hidden;
@@ -976,7 +1010,7 @@
         <div class="brand-mini" aria-hidden="true"><span class="icon-slot" data-icon="umezono-dango" data-icon-size="24"></span></div>
         <div class="brand-copy">
           <h1 class="brand-name">梅園レシピ帳</h1>
-          <p class="brand-version">v0.2-1_work</p>
+          <p class="brand-version">v0.2-2_work</p>
         </div>
       </div>
       <div class="topbar-actions">
@@ -1243,6 +1277,7 @@
             <div id="allergen-editor-list" class="allergen-editor-list"></div>
           </section>
 
+          <div id="edit-save-state" class="edit-save-state" role="status" aria-live="polite">保存済み</div>
           <div id="edit-recipe-result" class="create-result" role="status" aria-live="polite"></div>
           <div class="form-actions">
             <button id="edit-recipe-cancel" class="ghost-button button-with-icon" type="button"><span class="icon-slot" data-icon="arrow-left" data-icon-size="17"></span><span>管理画面へ戻る</span></button>
@@ -1281,7 +1316,7 @@
     'use strict';
 
     const APP_CONFIG = Object.freeze({
-      version: 'v0.2-1_work',
+      version: 'v0.2-2_work',
       apiUrl: 'https://script.google.com/macros/s/AKfycbyvpT8d7SrctV8vHGz1389z6Atn3lkXVfk4pwL-hyJhuF43o2BbS4Ww74tTCENNydnh/exec',
       portalUrl: 'https://umezono-systems.github.io/umezono-portal/',
       timeoutMs: 30000,
@@ -1355,6 +1390,9 @@
       toastTimer: null,
       isGuest: true,
       draftEditor: null,
+      draftDirty: false,
+      draftSaving: false,
+      draftLastSavedAt: '',
       contributors: [],
       contributorFilter: '',
       contributorChanges: {},
@@ -1411,7 +1449,7 @@
       $('login-form').addEventListener('submit', handleLogin);
       $('management-login-button').addEventListener('click', () => showLogin(true));
       $('logout-button').addEventListener('click', handleLogout);
-      $('portal-button').addEventListener('click', () => { location.href = (state.app && state.app.portal_url) || APP_CONFIG.portalUrl; });
+      $('portal-button').addEventListener('click', () => { if (!confirmDiscardDraftChanges()) return; location.href = (state.app && state.app.portal_url) || APP_CONFIG.portalUrl; });
       $('hero-all-recipes').addEventListener('click', () => openScreen('recipes'));
       $('hero-new-recipe').addEventListener('click', openCreateRecipeScreen);
       $('admin-new-recipe').addEventListener('click', openCreateRecipeScreen);
@@ -1423,6 +1461,8 @@
       $('create-recipe-form').addEventListener('submit', handleCreateRecipe);
       $('create-recipe-cancel').addEventListener('click', () => openScreen('admin'));
       $('edit-recipe-form').addEventListener('submit', (event) => event.preventDefault());
+      $('edit-recipe-form').addEventListener('input', markDraftDirty);
+      $('edit-recipe-form').addEventListener('change', markDraftDirty);
       $('save-draft-button').addEventListener('click', handleUpdateRecipeDraft);
       $('publish-draft-button').addEventListener('click', handleSaveAndPublish);
       $('edit-recipe-cancel').addEventListener('click', () => openScreen('admin'));
@@ -1438,11 +1478,12 @@
       $('delete-batch-pattern-button').addEventListener('click', deleteActiveBatchPattern);
       document.querySelectorAll('input[name="edit-scope-mode"]').forEach((input) => input.addEventListener('change', updateScopeEditorVisibility));
       $('edit-allergen-status').addEventListener('change', updateAllergenEditorVisibility);
-      $('add-ingredient-button').addEventListener('click', () => addIngredientEditorRow({}));
-      $('add-step-button').addEventListener('click', () => addStepEditorRow({}));
+      $('add-ingredient-button').addEventListener('click', () => { addIngredientEditorRow({}); markDraftDirty(); });
+      $('add-step-button').addEventListener('click', () => { addStepEditorRow({}); markDraftDirty(); });
       document.querySelectorAll('[data-open-screen]').forEach((button) => button.addEventListener('click', () => openScreen(button.dataset.openScreen)));
       document.querySelectorAll('[data-nav-screen]').forEach((button) => button.addEventListener('click', () => openScreen(button.dataset.navScreen)));
       window.addEventListener('pageshow', handlePageShow);
+      window.addEventListener('beforeunload', handleBeforeUnload);
       document.addEventListener('visibilitychange', () => { if (!document.hidden && state.auth && !state.isPreview) validateSessionQuietly(); });
     }
 
@@ -1749,7 +1790,59 @@
       }
     }
 
+    function updateDraftSaveUi() {
+      const element = $('edit-save-state');
+      if (!element) return;
+      element.className = 'edit-save-state';
+      if (state.draftSaving) {
+        element.classList.add('is-saving');
+        element.textContent = '保存しています…';
+      } else if (state.draftDirty) {
+        element.classList.add('is-dirty');
+        element.textContent = '未保存の変更があります';
+      } else {
+        const savedAt = state.draftLastSavedAt ? formatDateTime(state.draftLastSavedAt) : '';
+        element.textContent = savedAt ? `保存済み　最終保存 ${savedAt}` : '保存済み';
+      }
+      $('save-draft-button').disabled = Boolean(state.draftSaving);
+      $('publish-draft-button').disabled = Boolean(state.draftSaving);
+    }
+
+    function markDraftDirty() {
+      if (state.currentScreen !== 'edit-recipe' || !state.draftEditor || state.draftSaving) return;
+      state.draftDirty = true;
+      updateDraftSaveUi();
+    }
+
+    function setDraftSaved(updatedAt = '') {
+      state.draftDirty = false;
+      if (updatedAt) state.draftLastSavedAt = updatedAt;
+      updateDraftSaveUi();
+    }
+
+    function setDraftSaving(active) {
+      state.draftSaving = Boolean(active);
+      updateDraftSaveUi();
+    }
+
+    function confirmDiscardDraftChanges() {
+      if (state.currentScreen !== 'edit-recipe' || !state.draftDirty) return true;
+      const discard = window.confirm('レシピ編集に未保存の変更があります。変更を破棄して移動しますか？');
+      if (!discard) return false;
+      state.draftDirty = false;
+      state.draftEditor = null;
+      updateDraftSaveUi();
+      return true;
+    }
+
+    function handleBeforeUnload(event) {
+      if (!state.draftDirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    }
+
     function openScreen(screenName) {
+      if (state.currentScreen === 'edit-recipe' && screenName !== 'edit-recipe' && !confirmDiscardDraftChanges()) return;
       if (state.currentScreen === 'contributors' && screenName !== 'contributors' && Object.keys(state.contributorChanges || {}).length) {
         const discard = window.confirm('投稿者設定に未保存の変更があります。変更を破棄して移動しますか？');
         if (!discard) return;
@@ -2089,6 +2182,7 @@
       renderScopeEditor(data.scopes || []);
       renderAllergenEditor(version.allergen_check_status || 'unconfirmed', data.allergens || []);
       $('edit-recipe-result').innerHTML = ''; hydrateIcons($('screen-edit-recipe')); renumberEditorRows();
+      state.draftDirty = false; state.draftSaving = false; state.draftLastSavedAt = version.updated_at || ''; updateDraftSaveUi();
     }
 
     function createLocalPatternKey() { return `local-${Date.now()}-${Math.random().toString(36).slice(2,9)}`; }
@@ -2116,23 +2210,23 @@
 
     function addBatchPattern() {
       saveActiveBatchPatternForm(); const key=createLocalPatternKey(); const count=state.batchPatternEditor.patterns.length+1;
-      state.batchPatternEditor.patterns.push({client_key:key,pattern_name:`仕込み量 ${count}`,multiplier_value:1,yield_quantity:'',yield_unit_code:'',yield_note:'',is_default:false,process_adjustment_note:'',sort_order:count,ingredients:[]}); activateBatchPattern(key,false);
+      state.batchPatternEditor.patterns.push({client_key:key,pattern_name:`仕込み量 ${count}`,multiplier_value:1,yield_quantity:'',yield_unit_code:'',yield_note:'',is_default:false,process_adjustment_note:'',sort_order:count,ingredients:[]}); activateBatchPattern(key,false); markDraftDirty();
     }
 
     function copyActiveBatchPattern() {
       saveActiveBatchPatternForm(); const source=state.batchPatternEditor.patterns.find((item) => item.client_key === state.batchPatternEditor.activeKey); if (!source) return;
       const raw=window.prompt('基準の仕込み量に対する倍率を入力してください。', '1.5'); if (raw === null) return; const factor=Number(raw); if (!Number.isFinite(factor) || factor <= 0) { showToast('倍率は0より大きい数値で入力してください。','error'); return; }
       const key=createLocalPatternKey(); const copiedIngredients=(source.ingredients || []).map((item) => { const quantity=Number(item.quantity); const canMultiply=item.scaling_method === 'proportional' && Number.isFinite(quantity) && item.quantity !== ''; return {...item, quantity:canMultiply ? Number((quantity*factor).toFixed(3)) : item.quantity}; });
-      state.batchPatternEditor.patterns.push({client_key:key,pattern_name:`${source.pattern_name || '仕込み量'} ${factor}倍`,multiplier_value:factor,yield_quantity:(source.yield_quantity !== '' && Number.isFinite(Number(source.yield_quantity))) ? Number((Number(source.yield_quantity)*factor).toFixed(3)) : source.yield_quantity,yield_unit_code:source.yield_unit_code,yield_note:'',is_default:false,process_adjustment_note:'',sort_order:state.batchPatternEditor.patterns.length+1,ingredients:copiedIngredients}); activateBatchPattern(key,false);
+      state.batchPatternEditor.patterns.push({client_key:key,pattern_name:`${source.pattern_name || '仕込み量'} ${factor}倍`,multiplier_value:factor,yield_quantity:(source.yield_quantity !== '' && Number.isFinite(Number(source.yield_quantity))) ? Number((Number(source.yield_quantity)*factor).toFixed(3)) : source.yield_quantity,yield_unit_code:source.yield_unit_code,yield_note:'',is_default:false,process_adjustment_note:'',sort_order:state.batchPatternEditor.patterns.length+1,ingredients:copiedIngredients}); activateBatchPattern(key,false); markDraftDirty();
     }
 
     function setActiveBatchPatternAsDefault() {
-      saveActiveBatchPatternForm(); state.batchPatternEditor.patterns.forEach((item) => { item.is_default=item.client_key === state.batchPatternEditor.activeKey; }); activateBatchPattern(state.batchPatternEditor.activeKey,false);
+      saveActiveBatchPatternForm(); state.batchPatternEditor.patterns.forEach((item) => { item.is_default=item.client_key === state.batchPatternEditor.activeKey; }); activateBatchPattern(state.batchPatternEditor.activeKey,false); markDraftDirty();
     }
 
     function deleteActiveBatchPattern() {
       const editor=state.batchPatternEditor; if (editor.patterns.length <= 1) return; const active=editor.patterns.find((item) => item.client_key === editor.activeKey); if (!window.confirm(`${active ? active.pattern_name : 'この仕込み量'}を削除しますか？`)) return;
-      const index=editor.patterns.findIndex((item) => item.client_key === editor.activeKey); const wasDefault=active && active.is_default; editor.patterns.splice(index,1); if (wasDefault) editor.patterns[0].is_default=true; editor.patterns.forEach((item,i) => item.sort_order=i+1); activateBatchPattern(editor.patterns[Math.max(0,index-1)].client_key,false);
+      const index=editor.patterns.findIndex((item) => item.client_key === editor.activeKey); const wasDefault=active && active.is_default; editor.patterns.splice(index,1); if (wasDefault) editor.patterns[0].is_default=true; editor.patterns.forEach((item,i) => item.sort_order=i+1); activateBatchPattern(editor.patterns[Math.max(0,index-1)].client_key,false); markDraftDirty();
     }
 
     function unitOptionsHtml(selectedCode, allowedTypes, includeBlank = true) {
@@ -2157,7 +2251,7 @@
           <label class="field is-wide"><span class="field-label">下処理・補足</span><input class="field-input" data-field="preparation_note" maxlength="500" value="${escapeHtml(item.preparation_note || '')}" placeholder="例：1～2mmに刻む"></label>
           <label class="field"><span class="field-label">倍率換算</span><select class="field-input" data-field="scaling_method"><option value="proportional" ${(item.scaling_method || 'proportional') === 'proportional' ? 'selected' : ''}>比例</option><option value="fixed" ${item.scaling_method === 'fixed' ? 'selected' : ''}>固定</option><option value="manual" ${item.scaling_method === 'manual' ? 'selected' : ''}>要手動調整</option></select></label>
         </div>`;
-      card.querySelector('[data-remove-row]').addEventListener('click', () => { card.remove(); renumberEditorRows(); });
+      card.querySelector('[data-remove-row]').addEventListener('click', () => { card.remove(); renumberEditorRows(); markDraftDirty(); });
       container.appendChild(card);
       renumberEditorRows();
     }
@@ -2179,7 +2273,7 @@
           <label class="field is-wide"><span class="field-label">仕上がり判断</span><input class="field-input" data-field="checkpoint" maxlength="1000" value="${escapeHtml(item.checkpoint || '')}"></label>
           <label class="field is-wide"><span class="field-label">工程上の注意</span><input class="field-input" data-field="caution" maxlength="1000" value="${escapeHtml(item.caution || '')}"></label>
         </div>`;
-      card.querySelector('[data-remove-row]').addEventListener('click', () => { card.remove(); renumberEditorRows(); });
+      card.querySelector('[data-remove-row]').addEventListener('click', () => { card.remove(); renumberEditorRows(); markDraftDirty(); });
       container.appendChild(card);
       renumberEditorRows();
     }
@@ -2268,7 +2362,7 @@
     }
 
     async function handleUpdateRecipeDraft(event) {
-      event.preventDefault(); if (!state.draftEditor || !state.draftEditor.version) return;
+      event.preventDefault(); if (!state.draftEditor || !state.draftEditor.version || state.draftSaving) return;
       saveActiveBatchPatternForm();
       const version=state.draftEditor.version; const patterns=state.batchPatternEditor.patterns;
       const payload={ recipe_id:state.draftEditor.recipe.recipe_id, recipe_version_id:version.recipe_version_id, expected_updated_at:version.updated_at, expected_recipe_updated_at:state.draftEditor.recipe.updated_at,
@@ -2276,9 +2370,9 @@
         version:{ recipe_name:$('edit-recipe-name').value.trim(), category_code:$('edit-category').value, summary:$('edit-summary').value.trim(), preparation:$('edit-preparation').value.trim(), storage_method:$('edit-storage-method').value.trim(), shelf_life_note:$('edit-shelf-life-note').value.trim(), quality_check:$('edit-quality-check').value.trim(), caution:$('edit-caution').value.trim(), allergen_check_status:$('edit-allergen-status').value },
         batch_patterns:patterns.map((item,index) => ({client_key:item.client_key,pattern_name:item.pattern_name,multiplier_value:item.multiplier_value,yield_quantity:item.yield_quantity,yield_unit_code:item.yield_unit_code,yield_note:item.yield_note,is_default:item.is_default,process_adjustment_note:item.process_adjustment_note,sort_order:index+1})),
         ingredients:patterns.flatMap((item) => (item.ingredients || []).map((ingredient) => ({...ingredient,batch_pattern_key:item.client_key}))), steps:collectStepRows(), scopes:collectScopeRows(), allergens:collectAllergenRows() };
-      setLoading(true,'下書きを保存しています。');
-      try { const result=await apiRequest('updateRecipeDraft',payload); state.draftEditor.version.updated_at=result.updated_at; state.draftEditor.recipe.updated_at=result.recipe_updated_at || result.updated_at; state.draftEditor.version.recipe_name=payload.version.recipe_name; state.draftEditor.recipe.recipe_class_code=payload.recipe.recipe_class_code; $('edit-recipe-result').innerHTML=`<div class="notice-box">下書きを保存しました。<br>仕込み量 ${escapeHtml(String(result.batch_pattern_count || patterns.length))}件 / 材料 ${escapeHtml(String(result.ingredient_count || 0))}件<br>更新 ${escapeHtml(formatDateTime(result.updated_at) || result.updated_at)}</div>`; await loadAdminData(); showToast('下書きを保存しました。','ok'); }
-      catch(error) { $('edit-recipe-result').innerHTML=`<div class="alert-text">${escapeHtml(error.message)}</div>`; } finally { setLoading(false); }
+      setDraftSaving(true); setLoading(true,'下書きを保存しています。');
+      try { const result=await apiRequest('updateRecipeDraft',payload); state.draftEditor.version.updated_at=result.updated_at; state.draftEditor.recipe.updated_at=result.recipe_updated_at || result.updated_at; state.draftEditor.version.recipe_name=payload.version.recipe_name; state.draftEditor.recipe.recipe_class_code=payload.recipe.recipe_class_code; setDraftSaved(result.updated_at); $('edit-recipe-result').innerHTML=`<div class="notice-box">下書きを保存しました。<br>仕込み量 ${escapeHtml(String(result.batch_pattern_count || patterns.length))}件 / 材料 ${escapeHtml(String(result.ingredient_count || 0))}件<br>更新 ${escapeHtml(formatDateTime(result.updated_at) || result.updated_at)}</div>`; await loadAdminData(); showToast('下書きを保存しました。','ok'); }
+      catch(error) { $('edit-recipe-result').innerHTML=`<div class="alert-text">${escapeHtml(error.message)}</div>`; } finally { setDraftSaving(false); setLoading(false); }
     }
 
     function collectDraftPayload() {
@@ -2292,14 +2386,15 @@
     }
 
     async function handleSaveAndPublish() {
-      if (!state.draftEditor || !state.draftEditor.version) return;
+      if (!state.draftEditor || !state.draftEditor.version || state.draftSaving) return;
       if (!window.confirm('現在の内容を保存し、正式レシピとして公開しますか？\n公開後に変更する場合は、新版下書きを作成します。')) return;
-      setLoading(true, '保存して正式公開しています。');
+      setDraftSaving(true); setLoading(true, '保存して正式公開しています。');
       try {
         const payload = collectDraftPayload();
         const saved = await apiRequest('updateRecipeDraft', payload);
         state.draftEditor.version.updated_at = saved.updated_at;
         state.draftEditor.recipe.updated_at = saved.recipe_updated_at || saved.updated_at;
+        setDraftSaved(saved.updated_at);
         await apiRequest('publishRecipeVersion', {
           recipe_version_id:payload.recipe_version_id,
           expected_updated_at:saved.updated_at
@@ -2312,6 +2407,7 @@
       } catch (error) {
         $('edit-recipe-result').innerHTML = `<div class="alert-text">${escapeHtml(error.message).replace(/\n/g,'<br>')}</div>`;
       } finally {
+        setDraftSaving(false);
         setLoading(false);
       }
     }
@@ -2458,6 +2554,7 @@
     }
 
     async function handleLogout() {
+      if (!confirmDiscardDraftChanges()) return;
       setLoading(true, 'ログアウトしています。');
       try { if (!state.isPreview) await apiRequest('logoutRecipeApp'); } catch (error) { /* local logout continues */ }
       clearStoredAuth();
