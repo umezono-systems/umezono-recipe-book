@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7b8a2">
-  <title>梅園レシピ帳 v0.1_complete</title>
+  <title>梅園レシピ帳 v0.2-1_work</title>
   <style>
     :root {
       --bg: #fff9ef;
@@ -976,7 +976,7 @@
         <div class="brand-mini" aria-hidden="true"><span class="icon-slot" data-icon="umezono-dango" data-icon-size="24"></span></div>
         <div class="brand-copy">
           <h1 class="brand-name">梅園レシピ帳</h1>
-          <p class="brand-version">v0.1_complete</p>
+          <p class="brand-version">v0.2-1_work</p>
         </div>
       </div>
       <div class="topbar-actions">
@@ -1246,7 +1246,7 @@
           <div id="edit-recipe-result" class="create-result" role="status" aria-live="polite"></div>
           <div class="form-actions">
             <button id="edit-recipe-cancel" class="ghost-button button-with-icon" type="button"><span class="icon-slot" data-icon="arrow-left" data-icon-size="17"></span><span>管理画面へ戻る</span></button>
-            <button class="secondary-button button-with-icon" type="submit"><span class="icon-slot" data-icon="save" data-icon-size="18"></span><span>下書きを保存</span></button>
+            <button id="save-draft-button" class="secondary-button button-with-icon" type="button"><span class="icon-slot" data-icon="save" data-icon-size="18"></span><span>下書きを保存</span></button>
             <button id="publish-draft-button" class="primary-button button-with-icon" type="button"><span class="icon-slot" data-icon="send" data-icon-size="18"></span><span>保存して正式公開</span></button>
           </div>
           <div class="draft-save-note">正式公開後の内容を変更するときは、新版下書きを作成します。保存時に同時編集も確認します。</div>
@@ -1281,7 +1281,7 @@
     'use strict';
 
     const APP_CONFIG = Object.freeze({
-      version: 'v0.1_complete',
+      version: 'v0.2-1_work',
       apiUrl: 'https://script.google.com/macros/s/AKfycbyvpT8d7SrctV8vHGz1389z6Atn3lkXVfk4pwL-hyJhuF43o2BbS4Ww74tTCENNydnh/exec',
       portalUrl: 'https://umezono-systems.github.io/umezono-portal/',
       timeoutMs: 30000,
@@ -1422,7 +1422,8 @@
       $('clear-recent-button').addEventListener('click', clearRecentRecipes);
       $('create-recipe-form').addEventListener('submit', handleCreateRecipe);
       $('create-recipe-cancel').addEventListener('click', () => openScreen('admin'));
-      $('edit-recipe-form').addEventListener('submit', handleUpdateRecipeDraft);
+      $('edit-recipe-form').addEventListener('submit', (event) => event.preventDefault());
+      $('save-draft-button').addEventListener('click', handleUpdateRecipeDraft);
       $('publish-draft-button').addEventListener('click', handleSaveAndPublish);
       $('edit-recipe-cancel').addEventListener('click', () => openScreen('admin'));
       $('contributor-search').addEventListener('input', () => {
