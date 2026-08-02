@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7b8a2">
-  <title>梅園レシピ帳 v0.2-4_work</title>
+  <title>梅園レシピ帳 v0.2-5_work</title>
   <style>
     :root {
       --bg: #fff9ef;
@@ -902,6 +902,60 @@
     .nav-button > span:last-child { min-height: 14px; display: grid; place-items: center; line-height: 14px; }
     .nav-button.is-active { background: var(--brand-soft); color: var(--brand-dark); }
 
+    .publish-review-overlay {
+      position: fixed;
+      z-index: 105;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(58, 43, 35, .48);
+      backdrop-filter: blur(5px);
+    }
+    .publish-review-card {
+      width: min(760px, 100%);
+      max-height: min(88vh, 860px);
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+    .publish-review-head {
+      position: sticky;
+      z-index: 1;
+      top: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.96);
+      backdrop-filter: blur(10px);
+    }
+    .publish-review-title { margin: 0; font-size: 20px; font-weight: 900; }
+    .publish-review-note { margin: 3px 0 0; color: var(--muted); font-size: 11px; font-weight: 700; }
+    .publish-review-body { display: grid; gap: 14px; padding: 18px 20px; }
+    .publish-review-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
+    .publish-review-item { padding: 11px 13px; border: 1px solid var(--line); border-radius: 14px; background: #fffaf5; }
+    .publish-review-label { color: var(--muted); font-size: 10px; font-weight: 900; }
+    .publish-review-value { margin-top: 3px; font-size: 13px; font-weight: 900; overflow-wrap: anywhere; }
+    .publish-review-section { padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+    .publish-review-section-title { margin: 0 0 9px; font-size: 13px; font-weight: 900; }
+    .publish-review-list { display: grid; gap: 6px; margin: 0; padding-left: 20px; font-size: 12px; font-weight: 700; }
+    .publish-review-alert { padding: 12px 14px; border-radius: 14px; font-size: 12px; font-weight: 800; }
+    .publish-review-alert.is-error { border: 1px solid #efc0bb; background: #fff4f2; color: var(--danger); }
+    .publish-review-alert.is-warning { border: 1px solid #ead497; background: #fff9e8; color: #735700; }
+    .publish-review-confirm { display: flex; align-items: flex-start; gap: 9px; padding: 13px 14px; border: 1px solid var(--line); border-radius: 15px; background: #f8f5ef; font-size: 12px; font-weight: 900; }
+    .publish-review-confirm input { width: 19px; height: 19px; flex: 0 0 auto; margin-top: 1px; }
+    .publish-review-actions { display: flex; justify-content: flex-end; gap: 9px; padding: 0 20px 20px; }
+    @media (max-width: 600px) {
+      .publish-review-grid { grid-template-columns: 1fr; }
+      .publish-review-actions { flex-direction: column-reverse; }
+      .publish-review-actions button { width: 100%; }
+    }
+
     .loading-overlay {
       position: fixed;
       z-index: 100;
@@ -1016,7 +1070,7 @@
         <div class="brand-mini" aria-hidden="true"><span class="icon-slot" data-icon="umezono-dango" data-icon-size="24"></span></div>
         <div class="brand-copy">
           <h1 class="brand-name">梅園レシピ帳</h1>
-          <p class="brand-version">v0.2-4_work</p>
+          <p class="brand-version">v0.2-5_work</p>
         </div>
       </div>
       <div class="topbar-actions">
@@ -1313,6 +1367,23 @@
     </nav>
   </div>
 
+  <div id="publish-review-overlay" class="publish-review-overlay" hidden>
+    <section class="publish-review-card" role="dialog" aria-modal="true" aria-labelledby="publish-review-title">
+      <div class="publish-review-head">
+        <div>
+          <h2 id="publish-review-title" class="publish-review-title">正式公開前の確認</h2>
+          <p class="publish-review-note">公開内容を確認してください。重大な不足がある場合は公開できません。</p>
+        </div>
+        <button id="publish-review-close" class="icon-button" type="button" aria-label="確認画面を閉じる"><span class="icon-slot" data-icon="x" data-icon-size="20"></span></button>
+      </div>
+      <div id="publish-review-body" class="publish-review-body"></div>
+      <div class="publish-review-actions">
+        <button id="publish-review-cancel" class="ghost-button" type="button">編集へ戻る</button>
+        <button id="publish-review-submit" class="primary-button button-with-icon" type="button" disabled><span class="icon-slot" data-icon="send" data-icon-size="18"></span><span>確認して正式公開</span></button>
+      </div>
+    </section>
+  </div>
+
   <div id="loading-overlay" class="loading-overlay" hidden>
     <div class="loading-card"><div class="spinner" aria-hidden="true"></div><span id="loading-text">読み込んでいます。</span></div>
   </div>
@@ -1322,7 +1393,7 @@
     'use strict';
 
     const APP_CONFIG = Object.freeze({
-      version: 'v0.2-4_work',
+      version: 'v0.2-5_work',
       apiUrl: 'https://script.google.com/macros/s/AKfycbyvpT8d7SrctV8vHGz1389z6Atn3lkXVfk4pwL-hyJhuF43o2BbS4Ww74tTCENNydnh/exec',
       portalUrl: 'https://umezono-systems.github.io/umezono-portal/',
       timeoutMs: 30000,
@@ -1342,6 +1413,7 @@
       search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
       heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>',
       settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1z"/>',
+      x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
       'lock-keyhole': '<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><path d="M12 15v2"/>',
       'log-in': '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/>',
       'log-out': '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
@@ -1400,6 +1472,7 @@
       draftDirty: false,
       draftSaving: false,
       draftLastSavedAt: '',
+      pendingPublishPayload: null,
       contributors: [],
       contributorFilter: '',
       contributorChanges: {},
@@ -1497,6 +1570,11 @@
       $('edit-recipe-form').addEventListener('change', markDraftDirty);
       $('save-draft-button').addEventListener('click', handleUpdateRecipeDraft);
       $('publish-draft-button').addEventListener('click', handleSaveAndPublish);
+      $('publish-review-close').addEventListener('click', closePublishReview);
+      $('publish-review-cancel').addEventListener('click', closePublishReview);
+      $('publish-review-submit').addEventListener('click', executeReviewedPublish);
+      $('publish-review-overlay').addEventListener('click', (event) => { if (event.target === $('publish-review-overlay')) closePublishReview(); });
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !$('publish-review-overlay').hidden) closePublishReview(); });
       $('edit-recipe-cancel').addEventListener('click', () => openScreen('admin'));
       $('contributor-search').addEventListener('input', () => {
         state.contributorFilter = $('contributor-search').value.trim().toLowerCase();
@@ -2446,12 +2524,99 @@
         ingredients:patterns.flatMap((item) => (item.ingredients || []).map((ingredient) => ({...ingredient,batch_pattern_key:item.client_key}))), steps:collectStepRows(), scopes:collectScopeRows(), allergens:collectAllergenRows() };
     }
 
+    function masterName(rows, codeKey, nameKey, code) {
+      const item = (rows || []).find((row) => String(row[codeKey] || '') === String(code || ''));
+      return item ? String(item[nameKey] || code || '') : String(code || '');
+    }
+
+    function buildPublishReview(payload) {
+      const errors = [];
+      const warnings = [];
+      const patterns = payload.batch_patterns || [];
+      const ingredients = payload.ingredients || [];
+      const steps = payload.steps || [];
+      const scopes = payload.scopes || [];
+      const allergens = payload.allergens || [];
+      const defaultPattern = patterns.find((item) => Boolean(item.is_default));
+      const recipeName = String(payload.version.recipe_name || '').trim();
+
+      if (!recipeName) errors.push('レシピ名が入力されていません。');
+      if (!payload.version.category_code) errors.push('カテゴリが選択されていません。');
+      if (!patterns.length) errors.push('仕込み量が登録されていません。');
+      if (patterns.length && !defaultPattern) errors.push('基準となる仕込み量が設定されていません。');
+      if (patterns.some((item) => !String(item.pattern_name || '').trim())) errors.push('名称が未入力の仕込み量があります。');
+      if (!ingredients.length) errors.push('材料が1件も登録されていません。');
+      if (!steps.length) errors.push('工程が1件も登録されていません。');
+      if (!scopes.length) errors.push('使用場所が設定されていません。');
+      if (payload.version.allergen_check_status === 'unconfirmed') errors.push('アレルゲン確認が「未確認」です。');
+      if (payload.version.allergen_check_status === 'confirmed_present' && !allergens.length) errors.push('「該当あり」ですが、アレルゲンが選択されていません。');
+
+      if (!String(payload.version.summary || '').trim()) warnings.push('概要が未入力です。');
+      if (!String(payload.version.preparation || '').trim()) warnings.push('下準備が未入力です。');
+      if (!String(payload.version.storage_method || '').trim()) warnings.push('保存方法が未入力です。');
+      if (!String(payload.version.shelf_life_note || '').trim()) warnings.push('日持ち・期限の補足が未入力です。');
+      if (!String(payload.version.quality_check || '').trim()) warnings.push('仕上がりの確認が未入力です。');
+
+      const categoryName = masterName(state.masters.categories, 'category_code', 'category_name', payload.version.category_code) || '未選択';
+      const className = masterName(state.masters.recipe_classes, 'recipe_class_code', 'recipe_class_name', payload.recipe.recipe_class_code) || '未選択';
+      const defaultYield = defaultPattern ? [defaultPattern.yield_quantity, unitLabel(defaultPattern.yield_unit_code), defaultPattern.yield_note].filter((value) => String(value || '').trim()).join(' ') : '未設定';
+      const scopeText = scopes.some((item) => item.scope_type === 'all') ? '全社共通' : (scopes.map(scopeLabel).filter(Boolean).join('、') || '未設定');
+      const allergenStatus = payload.version.allergen_check_status === 'confirmed_none' ? '確認済み・該当なし' : payload.version.allergen_check_status === 'confirmed_present' ? `確認済み・該当あり（${allergens.length}件）` : '未確認';
+
+      return {
+        errors,
+        warnings,
+        html: `
+          <div class="publish-review-grid">
+            <div class="publish-review-item"><div class="publish-review-label">レシピ名</div><div class="publish-review-value">${escapeHtml(recipeName || '未入力')}</div></div>
+            <div class="publish-review-item"><div class="publish-review-label">版</div><div class="publish-review-value">Ver.${escapeHtml(String((state.draftEditor.version || {}).version_no || ''))}</div></div>
+            <div class="publish-review-item"><div class="publish-review-label">カテゴリ</div><div class="publish-review-value">${escapeHtml(categoryName)}</div></div>
+            <div class="publish-review-item"><div class="publish-review-label">レシピ区分</div><div class="publish-review-value">${escapeHtml(className)}</div></div>
+            <div class="publish-review-item"><div class="publish-review-label">基準仕込み量</div><div class="publish-review-value">${escapeHtml(defaultPattern ? defaultPattern.pattern_name : '未設定')} / ${escapeHtml(defaultYield)}</div></div>
+            <div class="publish-review-item"><div class="publish-review-label">登録件数</div><div class="publish-review-value">仕込み量 ${patterns.length}件・材料 ${ingredients.length}件・工程 ${steps.length}件</div></div>
+            <div class="publish-review-item"><div class="publish-review-label">使用場所</div><div class="publish-review-value">${escapeHtml(scopeText)}</div></div>
+            <div class="publish-review-item"><div class="publish-review-label">アレルゲン</div><div class="publish-review-value">${escapeHtml(allergenStatus)}</div></div>
+          </div>
+          ${errors.length ? `<div class="publish-review-alert is-error"><strong>公開できない項目があります。</strong><ul class="publish-review-list">${errors.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>` : ''}
+          ${warnings.length ? `<div class="publish-review-alert is-warning"><strong>未入力の補足項目があります。</strong><ul class="publish-review-list">${warnings.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>` : '<div class="publish-review-alert is-warning">主要な入力項目に不足はありません。</div>'}
+          <label class="publish-review-confirm"><input id="publish-review-confirm" type="checkbox" ${errors.length ? 'disabled' : ''}><span>表示内容と警告を確認し、この版を正式公開します。</span></label>
+        `
+      };
+    }
+
+    function openPublishReview(payload) {
+      const review = buildPublishReview(payload);
+      state.pendingPublishPayload = payload;
+      $('publish-review-body').innerHTML = review.html;
+      $('publish-review-submit').disabled = true;
+      const checkbox = $('publish-review-confirm');
+      if (checkbox) checkbox.addEventListener('change', () => { $('publish-review-submit').disabled = review.errors.length > 0 || !checkbox.checked; });
+      $('publish-review-overlay').hidden = false;
+      document.body.style.overflow = 'hidden';
+      hydrateIcons($('publish-review-overlay'));
+      setTimeout(() => { const target = review.errors.length ? $('publish-review-close') : checkbox; if (target) target.focus(); }, 0);
+    }
+
+    function closePublishReview() {
+      $('publish-review-overlay').hidden = true;
+      document.body.style.overflow = '';
+      state.pendingPublishPayload = null;
+    }
+
     async function handleSaveAndPublish() {
       if (!state.draftEditor || !state.draftEditor.version || state.draftSaving) return;
-      if (!window.confirm('現在の内容を保存し、正式レシピとして公開しますか？\n公開後に変更する場合は、新版下書きを作成します。')) return;
+      const payload = collectDraftPayload();
+      openPublishReview(payload);
+    }
+
+    async function executeReviewedPublish() {
+      const payload = state.pendingPublishPayload;
+      if (!payload || state.draftSaving) return;
+      const confirmBox = $('publish-review-confirm');
+      if (!confirmBox || !confirmBox.checked) return;
+      closePublishReview();
       setDraftSaving(true); setLoading(true, '保存して正式公開しています。');
       try {
-        const payload = collectDraftPayload();
         const saved = await apiRequest('updateRecipeDraft', payload);
         state.draftEditor.version.updated_at = saved.updated_at;
         state.draftEditor.recipe.updated_at = saved.recipe_updated_at || saved.updated_at;
