@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7b8a2">
-  <title>梅園レシピ帳 v0.2_complete</title>
+  <title>梅園レシピ帳 v0.3-1_work</title>
   <style>
     :root {
       --bg: #fff9ef;
@@ -446,12 +446,12 @@
       gap: 10px;
     }
     .category-card {
-      min-height: 105px;
+      min-height: 132px;
       display: grid;
       place-items: center;
       align-content: center;
       gap: 6px;
-      padding: 12px 8px;
+      padding: 13px 9px;
       border: 1px solid rgba(224, 211, 195, .9);
       border-radius: 19px;
       background: var(--category-bg, #fff);
@@ -464,6 +464,22 @@
     .category-icon { display: grid; place-items: center; color: var(--brand-dark); }
     .category-icon .icon-svg { width: 31px; height: 31px; }
     .category-name { font-size: 12px; font-weight: 900; }
+    .category-description {
+      max-width: 100%;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.45;
+      text-align: center;
+      text-wrap: balance;
+    }
+    .category-select-help {
+      min-height: 17px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
 
     .recipe-grid {
       display: grid;
@@ -1041,7 +1057,7 @@
       .search-panel { grid-template-columns: 1fr; }
       .search-button { width: 100%; }
       .category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-      .category-card { min-height: 94px; }
+      .category-card { min-height: 118px; }
       .recipe-grid { grid-template-columns: 1fr; }
       .recipe-card { grid-template-columns: 115px minmax(0,1fr); grid-template-rows: 1fr; min-height: 145px; }
       .recipe-cover { min-height: 145px; }
@@ -1106,7 +1122,7 @@
         <div class="brand-mini" aria-hidden="true"><span class="icon-slot" data-icon="umezono-dango" data-icon-size="24"></span></div>
         <div class="brand-copy">
           <h1 class="brand-name">梅園レシピ帳</h1>
-          <p class="brand-version">v0.2_complete</p>
+          <p class="brand-version">v0.3-1_work</p>
         </div>
       </div>
       <div class="topbar-actions">
@@ -1298,6 +1314,7 @@
             <label class="field">
               <span class="field-label">カテゴリ *</span>
               <select id="create-category" class="field-input" required></select>
+              <span id="create-category-help" class="category-select-help">カテゴリを選択すると説明が表示されます。</span>
             </label>
             <label class="field">
               <span class="field-label">レシピ区分 *</span>
@@ -1331,7 +1348,7 @@
             <div class="editor-section-head"><div><h3 class="editor-section-title">基本情報</h3><p class="editor-section-note">レシピ全体で共通する内容を入力します。</p></div></div>
             <div class="form-two-column">
               <label class="field"><span class="field-label">レシピ名 *</span><input id="edit-recipe-name" class="field-input" type="text" maxlength="100" required></label>
-              <label class="field"><span class="field-label">カテゴリ *</span><select id="edit-category" class="field-input" required></select></label>
+              <label class="field"><span class="field-label">カテゴリ *</span><select id="edit-category" class="field-input" required></select><span id="edit-category-help" class="category-select-help">カテゴリを選択すると説明が表示されます。</span></label>
               <label class="field"><span class="field-label">レシピ区分 *</span><select id="edit-recipe-class" class="field-input" required></select></label>
               <label class="field"><span class="field-label">保存方法</span><input id="edit-storage-method" class="field-input" type="text" maxlength="1000"></label>
               <label class="field"><span class="field-label">日持ち・期限の補足</span><input id="edit-shelf-life-note" class="field-input" type="text" maxlength="1000"></label>
@@ -1459,7 +1476,7 @@
     'use strict';
 
     const APP_CONFIG = Object.freeze({
-      version: 'v0.2_complete',
+      version: 'v0.3-1_work',
       apiUrl: 'https://script.google.com/macros/s/AKfycbyvpT8d7SrctV8vHGz1389z6Atn3lkXVfk4pwL-hyJhuF43o2BbS4Ww74tTCENNydnh/exec',
       portalUrl: 'https://umezono-systems.github.io/umezono-portal/',
       timeoutMs: 30000,
@@ -1489,6 +1506,8 @@
       save: '<path d="M4 3h14l2 2v16H4z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/>',
       'arrow-left': '<path d="m15 18-6-6 6-6"/><path d="M21 12H9"/>',
       sprout: '<path d="M7 20h10"/><path d="M12 20v-8"/><path d="M12 13c-3 0-5-2-5-5 3 0 5 1 5 4"/><path d="M12 11c0-3 2-5 5-5 0 3-2 5-5 5"/>',
+      'azuki-beans': '<path d="M8.1 4.3c-2.7.2-4.8 2.4-4.7 5.1.1 2.8 2.4 5 5.2 4.9 2.4-.1 4.4-1.9 4.8-4.2.3-1.9-.5-3.8-2.1-4.9-.9-.6-2-1-3.2-.9Z"/><path d="M7 8.1c1.7-.2 3.1.8 3.8 2.1"/><path d="M16.8 10.2c-2.4.2-4.2 2.2-4.1 4.6.1 2.5 2.2 4.4 4.7 4.3 2.2-.1 4-1.7 4.3-3.8.3-1.7-.4-3.4-1.8-4.4-.9-.6-2-.9-3.1-.7Z"/><path d="M15.8 13.4c1.4-.2 2.7.6 3.3 1.8"/>',
+      'circle-help': '<circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.4 2.4 0 1 1 3.7 2c-1 .6-1.5 1.1-1.5 2.2"/><path d="M12 17h.01"/>',
       dango: '<rect x="6" y="2" width="12" height="4" rx="1.2"/><rect x="6" y="6" width="12" height="4" rx="1.2"/><rect x="6" y="10" width="12" height="4" rx="1.2"/><rect x="6" y="14" width="12" height="4" rx="1.2"/><path d="M12 18v4"/>',
       'umezono-dango': '<rect x="6" y="2" width="12" height="4" rx="1.2"/><rect x="6" y="6" width="12" height="4" rx="1.2"/><rect x="6" y="10" width="12" height="4" rx="1.2"/><rect x="6" y="14" width="12" height="4" rx="1.2"/><path d="M12 18v4"/>',
       droplets: '<path d="M7 3s4 4.4 4 7.5A4 4 0 0 1 3 10.5C3 7.4 7 3 7 3z"/><path d="M17 7s4 4.4 4 7.5a4 4 0 0 1-8 0C13 11.4 17 7 17 7z"/>',
@@ -1507,8 +1526,21 @@
     });
 
     const CATEGORY_ICON_MAP = Object.freeze({
-      bean: 'sprout', dango: 'umezono-dango', syrup: 'droplets', wagashi: 'flower', oven: 'cookie',
-      jelly: 'cake-slice', drink: 'cup', meal: 'utensils', mixing_bowl: 'cooking-pot', recipe: 'book-open'
+      bean: 'azuki-beans', dango: 'umezono-dango', syrup: 'droplets', wagashi: 'flower', oven: 'cookie',
+      jelly: 'cake-slice', drink: 'cup', meal: 'utensils', mixing_bowl: 'cooking-pot', recipe: 'circle-help'
+    });
+
+    const CATEGORY_PRESENTATION_MAP = Object.freeze({
+      anko: Object.freeze({ name: '餡', description: 'つぶあん、こしあん、季節の餡など' }),
+      dango_mochi: Object.freeze({ name: '団子・餅', description: '団子、餅、生地類' }),
+      syrup_sauce: Object.freeze({ name: 'みつ・ソース', description: '黒みつ、みたらしタレ、ソース類' }),
+      namagashi: Object.freeze({ name: '生菓子', description: '生菓子、上生菓子など' }),
+      baked_sweets: Object.freeze({ name: '焼菓子', description: '焼成する菓子類' }),
+      agar_jelly: Object.freeze({ name: '寒天・ゼリー', description: '寒天、ゼリー、冷菓など' }),
+      drink: Object.freeze({ name: '飲み物', description: 'お茶、コーヒー、紅茶など' }),
+      meal: Object.freeze({ name: 'メニュー', description: '調理、仕上げ、盛り付け' }),
+      prep_component: Object.freeze({ name: '中間品', description: '複数の商品で使用する共通仕込み' }),
+      other: Object.freeze({ name: '未分類', description: 'ほかのカテゴリに該当しないもの' })
     });
 
     const COLOR_MAP = Object.freeze({
@@ -1560,6 +1592,41 @@
 
     function categoryIconSvg(iconKey, size = 32) {
       return iconSvg(CATEGORY_ICON_MAP[iconKey] || 'book-open', size);
+    }
+
+    function categoryPresentation(categoryOrCode, fallback = {}) {
+      const source = typeof categoryOrCode === 'object' && categoryOrCode !== null
+        ? categoryOrCode
+        : { category_code: categoryOrCode };
+      const code = String(source.category_code || fallback.category_code || '').trim();
+      const master = (state.masters.categories || []).find((item) => String(item.category_code || '') === code) || {};
+      const override = CATEGORY_PRESENTATION_MAP[code] || {};
+      const merged = { ...master, ...fallback, ...source };
+      return {
+        ...merged,
+        category_code: code,
+        category_name: override.name || merged.category_name || '未分類',
+        category_description: override.description || merged.category_description || '',
+        icon_key: merged.icon_key || 'recipe',
+        color_key: merged.color_key || 'cream'
+      };
+    }
+
+    function categoryDescriptionByCode(categoryCode) {
+      return categoryPresentation(categoryCode).category_description || '';
+    }
+
+    function categoryNameByCode(categoryCode, fallbackName = '') {
+      return categoryPresentation(categoryCode, { category_name: fallbackName }).category_name;
+    }
+
+    function updateCategorySelectHelp(selectId, helpId) {
+      const select = $(selectId);
+      const help = $(helpId);
+      if (!select || !help) return;
+      help.textContent = select.value
+        ? (categoryDescriptionByCode(select.value) || 'カテゴリの説明はありません。')
+        : 'カテゴリを選択すると説明が表示されます。';
     }
 
     function hydrateIcons(root = document) {
@@ -1647,6 +1714,8 @@
       });
       $('clear-recent-button').addEventListener('click', clearRecentRecipes);
       $('create-recipe-form').addEventListener('submit', handleCreateRecipe);
+      $('create-category').addEventListener('change', () => updateCategorySelectHelp('create-category', 'create-category-help'));
+      $('edit-category').addEventListener('change', () => updateCategorySelectHelp('edit-category', 'edit-category-help'));
       $('create-recipe-cancel').addEventListener('click', () => openScreen('admin'));
       $('edit-recipe-form').addEventListener('submit', (event) => event.preventDefault());
       $('edit-recipe-form').addEventListener('input', markDraftDirty);
@@ -1893,12 +1962,15 @@
     function renderCategories() {
       const grid = $('category-grid');
       const categories = state.masters.categories || [];
-      grid.innerHTML = categories.map((category) => `
-        <button class="category-card" type="button" data-category-code="${escapeHtml(category.category_code)}" style="--category-bg:${categoryColor(category.color_key)}">
-          <span class="category-icon" aria-hidden="true">${categoryIconSvg(category.icon_key, 31)}</span>
-          <span class="category-name">${escapeHtml(category.category_name)}</span>
-        </button>
-      `).join('');
+      grid.innerHTML = categories.map((category) => {
+        const display = categoryPresentation(category);
+        return `
+        <button class="category-card" type="button" data-category-code="${escapeHtml(display.category_code)}" style="--category-bg:${categoryColor(display.color_key)}">
+          <span class="category-icon" aria-hidden="true">${categoryIconSvg(display.icon_key, 31)}</span>
+          <span class="category-name">${escapeHtml(display.category_name)}</span>
+          <span class="category-description">${escapeHtml(display.category_description)}</span>
+        </button>`;
+      }).join('');
       grid.querySelectorAll('[data-category-code]').forEach((button) => button.addEventListener('click', async () => {
         openScreen('recipes');
         await loadRecipeList({ categoryCode: button.dataset.categoryCode, page: 1 });
@@ -1906,9 +1978,13 @@
     }
 
     function renderMasterOptions() {
-      $('recipe-category').innerHTML = '<option value="">すべてのカテゴリ</option>' + (state.masters.categories || []).map((item) => `<option value="${escapeHtml(item.category_code)}">${escapeHtml(item.category_name)}</option>`).join('');
+      const categoryOptions = (state.masters.categories || []).map((item) => {
+        const display = categoryPresentation(item);
+        return `<option value="${escapeHtml(display.category_code)}">${escapeHtml(display.category_name)}</option>`;
+      }).join('');
+      $('recipe-category').innerHTML = '<option value="">すべてのカテゴリ</option>' + categoryOptions;
       $('recipe-class').innerHTML = '<option value="">すべての区分</option>' + (state.masters.recipe_classes || []).map((item) => `<option value="${escapeHtml(item.recipe_class_code)}">${escapeHtml(item.recipe_class_name)}</option>`).join('');
-      $('admin-category').innerHTML = '<option value="">すべてのカテゴリ</option>' + (state.masters.categories || []).map((item) => `<option value="${escapeHtml(item.category_code)}">${escapeHtml(item.category_name)}</option>`).join('');
+      $('admin-category').innerHTML = '<option value="">すべてのカテゴリ</option>' + categoryOptions;
     }
 
     function renderRecipeGrid(containerId, recipes, emptyText) {
@@ -1930,7 +2006,8 @@
     }
 
     function recipeCardHtml(recipe) {
-      const categoryIcon = categoryIconSvg(recipe.icon_key, 55);
+      const category = categoryPresentation(recipe.category_code, recipe);
+      const categoryIcon = categoryIconSvg(category.icon_key, 55);
       const isFavorite = Boolean(recipe.is_favorite || (!state.auth && isLocalFavorite(recipe.recipe_id)));
       const favoriteButton = `<button class="favorite-button ${isFavorite ? 'is-active' : ''}" type="button" data-favorite-id="${escapeHtml(recipe.recipe_id)}" data-favorite-active="${isFavorite ? 'true' : 'false'}" aria-label="お気に入り${isFavorite ? 'から外す' : 'に追加'}">${iconSvg('heart', 20, isFavorite ? 'is-filled' : '')}</button>`;
       return `
@@ -1938,7 +2015,7 @@
           <div class="recipe-cover" style="--cover-bg:${categoryColor(recipe.color_key)}"><span>${categoryIcon}</span></div>
           ${favoriteButton}
           <div class="recipe-card-body">
-            <div class="badge-row"><span class="badge">${escapeHtml(recipe.category_name || '未分類')}</span><span class="badge is-neutral">${escapeHtml(recipe.recipe_class_name || '')}</span></div>
+            <div class="badge-row"><span class="badge">${escapeHtml(category.category_name)}</span><span class="badge is-neutral">${escapeHtml(recipe.recipe_class_name || '')}</span></div>
             <h3 class="recipe-name">${escapeHtml(recipe.recipe_name)}</h3>
             <p class="recipe-summary">${escapeHtml(recipe.summary || 'レシピの詳細を確認できます。')}</p>
             <div class="recipe-meta">Ver.${escapeHtml(String(recipe.version_no || ''))}${recipe.yield_text ? ` ・ ${escapeHtml(recipe.yield_text)}` : ''}${recipe.usage_location_text ? `<br>使用場所：${escapeHtml(recipe.usage_location_text)}` : ''}</div>
@@ -1970,7 +2047,8 @@
 
     function renderRecipeDetail(detail) {
       const recipe = detail.recipe || {};
-      const categoryIcon = categoryIconSvg(recipe.icon_key, 55);
+      const category = categoryPresentation(recipe.category_code, recipe);
+      const categoryIcon = categoryIconSvg(category.icon_key, 55);
       const patterns = (detail.batch_patterns && detail.batch_patterns.length) ? detail.batch_patterns : [{ recipe_batch_pattern_id:'legacy', pattern_name:formatYield(recipe) || '基本仕込み', yield_quantity:recipe.yield_quantity, yield_unit_symbol:recipe.yield_unit_symbol, yield_note:recipe.yield_note, is_default:true, process_adjustment_note:'', ingredients:detail.ingredients || [] }];
       const defaultPattern = patterns.find((item) => item.is_default) || patterns[0];
       const stepsHtml = (detail.steps || []).map((step) => `
@@ -1983,11 +2061,11 @@
         </div></article>`).join('') || emptyStateHtml('工程はまだ登録されていません。');
       const allergenText = formatAllergens(detail.allergens || [], recipe.allergen_check_status);
       $('detail-container').innerHTML = `
-        <article class="detail-panel"><div class="detail-hero" style="--detail-bg:${categoryColor(recipe.color_key)}">
+        <article class="detail-panel"><div class="detail-hero" style="--detail-bg:${categoryColor(category.color_key)}">
           <button id="detail-back-button" class="ghost-button detail-back button-with-icon" type="button">${iconSvg('arrow-left',17)}<span>戻る</span></button>
           <button id="detail-favorite-button" class="favorite-button detail-favorite ${recipe.is_favorite ? 'is-active' : ''}" type="button" data-favorite-active="${recipe.is_favorite ? 'true' : 'false'}">${iconSvg('heart',20,recipe.is_favorite ? 'is-filled' : '')}</button><span aria-hidden="true">${categoryIcon}</span>
         </div><div class="detail-content">
-          <div class="badge-row"><span class="badge">${escapeHtml(recipe.category_name || '未分類')}</span><span class="badge is-neutral">${escapeHtml(recipe.recipe_class_name || '')}</span></div>
+          <div class="badge-row"><span class="badge">${escapeHtml(category.category_name)}</span><span class="badge is-neutral">${escapeHtml(recipe.recipe_class_name || '')}</span></div>
           <h2 class="detail-title">${escapeHtml(recipe.recipe_name)}</h2>${recipe.summary ? `<p class="detail-summary">${escapeHtml(recipe.summary)}</p>` : ''}
           <div class="detail-meta-grid"><div class="detail-meta"><div class="detail-meta-label">版</div><div class="detail-meta-value">Ver.${escapeHtml(String(recipe.version_no || ''))}</div></div><div class="detail-meta"><div class="detail-meta-label">仕込み量</div><div id="detail-yield-value" class="detail-meta-value"></div></div><div class="detail-meta"><div class="detail-meta-label">公開日</div><div class="detail-meta-value">${escapeHtml(formatDate(recipe.published_at) || '—')}</div></div></div>
           <section class="detail-section"><h3 class="detail-section-title">使用場所</h3><div class="detail-text">${escapeHtml(recipe.usage_location_text || '未設定')}</div></section>
@@ -2168,8 +2246,12 @@
     }
 
     function populateCreateRecipeForm() {
-      $('create-category').innerHTML = '<option value="">選択してください</option>' + (state.masters.categories || []).map((item) => `<option value="${escapeHtml(item.category_code)}">${escapeHtml(item.category_name)}</option>`).join('');
+      $('create-category').innerHTML = '<option value="">選択してください</option>' + (state.masters.categories || []).map((item) => {
+        const display = categoryPresentation(item);
+        return `<option value="${escapeHtml(display.category_code)}">${escapeHtml(display.category_name)}</option>`;
+      }).join('');
       $('create-recipe-class').innerHTML = '<option value="">選択してください</option>' + (state.masters.recipe_classes || []).map((item) => `<option value="${escapeHtml(item.recipe_class_code)}">${escapeHtml(item.recipe_class_name)}</option>`).join('');
+      updateCategorySelectHelp('create-category', 'create-category-help');
       hydrateIcons($('screen-create-recipe'));
     }
 
@@ -2293,7 +2375,7 @@
         <article class="admin-recipe-row">
           <div>
             <h3 class="admin-recipe-name">${escapeHtml(item.recipe_name || '名称未設定')}</h3>
-            <div class="admin-recipe-meta">${escapeHtml(item.category_name || '未分類')} ・ ${escapeHtml(item.recipe_class_name || '')} ・ Ver.${escapeHtml(String(item.version_no || ''))}<br>${escapeHtml(item.recipe_id)} / 更新 ${escapeHtml(formatDateTime(item.updated_at) || '—')}${audit ? `<br>${escapeHtml(audit)}` : ''}</div>
+            <div class="admin-recipe-meta">${escapeHtml(categoryNameByCode(item.category_code, item.category_name))} ・ ${escapeHtml(item.recipe_class_name || '')} ・ Ver.${escapeHtml(String(item.version_no || ''))}<br>${escapeHtml(item.recipe_id)} / 更新 ${escapeHtml(formatDateTime(item.updated_at) || '—')}${audit ? `<br>${escapeHtml(audit)}` : ''}</div>
           </div>
           <div class="admin-row-actions">
             <span class="status-pill ${statusClass}">${escapeHtml(statusLabels[item.version_status] || item.version_status)}</span>
@@ -2340,7 +2422,7 @@
       const currentPublished = items.find((item) => String(item.recipe_version_id || '') === String(item.current_published_version_id || ''));
       const draftCount = items.filter((item) => ['draft','review_pending','returned'].includes(item.version_status)).length;
       const pastCount = items.filter((item) => item.version_status === 'superseded').length;
-      summary.innerHTML = `<h3 class="admin-recipe-name">${escapeHtml(latest.recipe_name || '名称未設定')}</h3><div class="admin-recipe-meta">${escapeHtml(recipeId)} ・ ${escapeHtml(latest.category_name || '未分類')} ・ ${escapeHtml(latest.recipe_class_name || '')}<br>全${escapeHtml(String(items.length))}版 / 公開中 ${currentPublished ? `Ver.${escapeHtml(String(currentPublished.version_no || ''))}` : 'なし'} / 下書き ${escapeHtml(String(draftCount))}件 / 過去版 ${escapeHtml(String(pastCount))}件</div>`;
+      summary.innerHTML = `<h3 class="admin-recipe-name">${escapeHtml(latest.recipe_name || '名称未設定')}</h3><div class="admin-recipe-meta">${escapeHtml(recipeId)} ・ ${escapeHtml(categoryNameByCode(latest.category_code, latest.category_name))} ・ ${escapeHtml(latest.recipe_class_name || '')}<br>全${escapeHtml(String(items.length))}版 / 公開中 ${currentPublished ? `Ver.${escapeHtml(String(currentPublished.version_no || ''))}` : 'なし'} / 下書き ${escapeHtml(String(draftCount))}件 / 過去版 ${escapeHtml(String(pastCount))}件</div>`;
       const statusLabels = { draft:'下書き', review_pending:'下書き', returned:'下書き', published:'公開中', superseded:'過去版', discontinued:'廃止' };
       list.innerHTML = items.map((item) => {
         const isCurrent = String(item.recipe_version_id || '') === String(item.current_published_version_id || '');
@@ -2542,7 +2624,11 @@
       const recipe = data.recipe || {};
       $('edit-recipe-heading').innerHTML = `<div class="editor-status-line"><span class="status-pill is-draft">下書き</span><span class="badge">${escapeHtml(recipe.recipe_class_name || '')}</span></div><h3 class="admin-recipe-name">${escapeHtml(version.recipe_name || '名称未設定')}　Ver.${escapeHtml(String(version.version_no || 1))}</h3><div class="admin-recipe-meta">${escapeHtml(recipe.recipe_id || '')} / ${escapeHtml(version.recipe_version_id || '')}</div>`;
       $('edit-recipe-name').value = version.recipe_name || '';
-      $('edit-category').innerHTML = (state.masters.categories || []).map((item) => `<option value="${escapeHtml(item.category_code)}" ${item.category_code === version.category_code ? 'selected' : ''}>${escapeHtml(item.category_name)}</option>`).join('');
+      $('edit-category').innerHTML = (state.masters.categories || []).map((item) => {
+        const display = categoryPresentation(item);
+        return `<option value="${escapeHtml(display.category_code)}" ${display.category_code === version.category_code ? 'selected' : ''}>${escapeHtml(display.category_name)}</option>`;
+      }).join('');
+      updateCategorySelectHelp('edit-category', 'edit-category-help');
       $('edit-recipe-class').innerHTML = (state.masters.recipe_classes || []).map((item) => `<option value="${escapeHtml(item.recipe_class_code)}" ${item.recipe_class_code === recipe.recipe_class_code ? 'selected' : ''}>${escapeHtml(item.recipe_class_name)}</option>`).join('');
       $('edit-recipe-class').disabled = false;
       $('edit-summary').value = version.summary || ''; $('edit-preparation').value = version.preparation || ''; $('edit-quality-check').value = version.quality_check || ''; $('edit-caution').value = version.caution || ''; $('edit-storage-method').value = version.storage_method || ''; $('edit-shelf-life-note').value = version.shelf_life_note || '';
@@ -2909,14 +2995,15 @@
 
     function normalizeRecipeSnapshot(recipe) {
       const item = recipe || {};
+      const category = categoryPresentation(item.category_code, item);
       return {
         recipe_id: String(item.recipe_id || ''),
         recipe_name: String(item.recipe_name || ''),
         summary: String(item.summary || ''),
-        category_name: String(item.category_name || ''),
-        category_code: String(item.category_code || ''),
-        icon_key: String(item.icon_key || 'recipe'),
-        color_key: String(item.color_key || 'cream'),
+        category_name: String(category.category_name || ''),
+        category_code: String(category.category_code || ''),
+        icon_key: String(category.icon_key || 'recipe'),
+        color_key: String(category.color_key || 'cream'),
         recipe_class_name: String(item.recipe_class_name || ''),
         version_no: item.version_no || '',
         yield_text: String(item.yield_text || formatYield(item) || ''),
@@ -3140,8 +3227,9 @@
       };
       state.masters = {
         categories: [
-          ['anko','餡','bean','azuki'], ['dango_mochi','団子・餅','dango','sakura'], ['syrup_sauce','蜜・ソース','syrup','honey'],
-          ['namagashi','生菓子','wagashi','ume'], ['baked_sweets','焼菓子','oven','kinako'], ['drink','飲料','drink','matcha']
+          ['anko','餡','bean','azuki'], ['dango_mochi','団子・餅','dango','sakura'], ['syrup_sauce','みつ・ソース','syrup','honey'],
+          ['namagashi','生菓子','wagashi','ume'], ['baked_sweets','焼菓子','oven','kinako'], ['agar_jelly','寒天・ゼリー','jelly','mizu'],
+          ['drink','飲み物','drink','matcha'], ['meal','メニュー','meal','mikan'], ['prep_component','中間品','mixing_bowl','cream'], ['other','未分類','recipe','gray']
         ].map(([category_code,category_name,icon_key,color_key], index) => ({ category_code, category_name, icon_key, color_key, sort_order: index + 1 })),
         recipe_classes: [
           { recipe_class_code: 'company_common', recipe_class_name: '全社共通' },
@@ -3151,7 +3239,7 @@
         ], units: [], allergens: []
       };
       const samples = [
-        { recipe_id:'RCP-P1', recipe_name:'新生姜蜜', summary:'新生姜の香りとスパイスを活かした蜜。', category_name:'蜜・ソース', category_code:'syrup_sauce', icon_key:'syrup', color_key:'honey', recipe_class_name:'全社共通', version_no:2, yield_text:'1000g', usage_location_text:'第一製造部・各店舗', is_favorite:true },
+        { recipe_id:'RCP-P1', recipe_name:'新生姜蜜', summary:'新生姜の香りとスパイスを活かした蜜。', category_name:'みつ・ソース', category_code:'syrup_sauce', icon_key:'syrup', color_key:'honey', recipe_class_name:'全社共通', version_no:2, yield_text:'1000g', usage_location_text:'第一製造部・各店舗', is_favorite:true },
         { recipe_id:'RCP-P2', recipe_name:'みたらし団子', summary:'もっちりとした団子と香ばしい蜜。', category_name:'団子・餅', category_code:'dango_mochi', icon_key:'dango', color_key:'sakura', recipe_class_name:'正式レシピ', version_no:4, yield_text:'30個', usage_location_text:'全社共通', is_favorite:false },
         { recipe_id:'RCP-P3', recipe_name:'抹茶あん', summary:'抹茶の香りを引き立てた仕込み餡。', category_name:'餡', category_code:'anko', icon_key:'bean', color_key:'azuki', recipe_class_name:'試作レシピ', version_no:1, yield_text:'2kg', usage_location_text:'第一製造部', is_favorite:false }
       ];
